@@ -15,6 +15,7 @@ import 'dashbord/screens/profile_page.dart';
 import 'dashbord/screens/publication_page.dart';
 import 'dashbord/screens/signale_page.dart';
 import 'dashbord/screens/user_page.dart';
+import 'mobiles/acceuil/app_bar.dart';
 
 
 void main() async {
@@ -63,8 +64,9 @@ class MyApp extends StatelessWidget {
         '/histoire': (context) => Histoire(),
 
       },
-       // home: Inscription(),
-     home: const LoginPage(),
+       // home: CustomBottomAppBar(currentIndex: 1,),
+      // home: Profile(),
+      home:  const LoginPage(),
     );
   }
 }
