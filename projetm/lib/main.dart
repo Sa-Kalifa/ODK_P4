@@ -62,9 +62,9 @@ class MyApp extends StatelessWidget {
         },
 
       home: IntroPage(),
-      // home: const MainScreen(),
-      //home:  const LoginPage(),
+      //home: const MainScreen(),
+      //home: Histoire(),
       // Color(0xFF914b14)
     );
   }
-}
+} // bottomNavigationBar: const CustomBottomAppBar(currentIndex: 1),

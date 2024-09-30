@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:projetm/mobiles/acceuil/app_bar.dart';
 import 'dart:io';
 
-import 'app_bar.dart';
 
 class Histoire extends StatefulWidget {
   const Histoire({super.key});
@@ -33,16 +33,21 @@ class _HistoireState extends State<Histoire> {
   // Méthode pour choisir des fichiers avec FilePicker
   Future<void> _pickFiles() async {
     try {
-      // Utiliser FilePicker pour sélectionner des images
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.image,
         allowMultiple: true,
       );
 
-      if (result != null) {
+      if (result != null && result.files.isNotEmpty) {
+        // Mise à jour de l'état avec les fichiers sélectionnés
         setState(() {
-          _selectedFiles = result.paths.map((path) => File(path!)).toList();
+          _selectedFiles = result.paths.where((path) => path != null).map((path) => File(path!)).toList();
         });
+      } else {
+        // Aucun fichier sélectionné
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Aucun fichier sélectionné.')),
+        );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -84,7 +89,7 @@ class _HistoireState extends State<Histoire> {
           'description': _description,
           'images': imageUrls,
           'uid': user.uid,
-          'userName': user.displayName ?? 'Utilisateur Anonyme',
+          'userName': _isAnonymous ? 'Anonyme' : (user.displayName ?? 'Utilisateur Anonyme'),
           'createdAt': Timestamp.now(),
           'isAnonymous': _isAnonymous,
         });
@@ -118,34 +123,46 @@ class _HistoireState extends State<Histoire> {
     return Scaffold(
       backgroundColor: const Color(0xFFFAF3E0), // Couleur de fond modifiée
       appBar: AppBar(
-        title: const Center(child: Text('Ajouter un Post')), // Titre centré
+        backgroundColor: const Color(0xFFFAF3E0),
+        title: const Center(
+          child: Text(
+            'Ajouter un Post',
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              fontSize: 25,
+            ),
+          ),
+        ), // Titre centré
         automaticallyImplyLeading: false, // Retirer le bouton Back
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(30),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Image et nom de l'utilisateur avec le switch
                 if (user != null)
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundImage: NetworkImage(user.photoURL ?? ''),
-                            radius: 20,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(user.displayName ?? 'Anonyme'),
-                        ],
+                      CircleAvatar(
+                        backgroundImage: NetworkImage(user.photoURL ?? ''),
+                        radius: 20,
                       ),
+                      const SizedBox(width: 15),
+                      Text(
+                        _isAnonymous ? 'Anonyme' : (user.displayName ?? 'Nom non disponible'),
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const Spacer(),
                       Switch(
                         value: _isAnonymous,
                         onChanged: (value) {
@@ -153,15 +170,23 @@ class _HistoireState extends State<Histoire> {
                             _isAnonymous = value;
                           });
                         },
-                        activeColor: Colors.green,
+                        activeColor: const Color(0xFF914b14),
                       ),
                     ],
                   ),
-                const SizedBox(height: 20), // Espacement entre l'élément utilisateur et le formulaire
+                const SizedBox(height: 50),
                 TextFormField(
                   decoration: const InputDecoration(
                     labelText: 'Titre',
+                    labelStyle: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                     border: OutlineInputBorder(),
+                  ),
+                  style: const TextStyle(
+                    color: Colors.black,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -175,13 +200,20 @@ class _HistoireState extends State<Histoire> {
                     });
                   },
                 ),
-                const SizedBox(height: 10),
-                // DropdownButton pour la catégorie
+                const SizedBox(height: 15),
                 DropdownButtonFormField<String>(
                   value: _categorie,
                   decoration: const InputDecoration(
                     labelText: 'Catégorie',
+                    labelStyle: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                     border: OutlineInputBorder(),
+                  ),
+                  style: const TextStyle(
+                    color: Colors.black,
                   ),
                   onChanged: (newValue) {
                     setState(() {
@@ -195,12 +227,20 @@ class _HistoireState extends State<Histoire> {
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 15),
                 TextFormField(
                   maxLines: 4,
                   decoration: const InputDecoration(
                     labelText: 'Description',
+                    labelStyle: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                     border: OutlineInputBorder(),
+                  ),
+                  style: const TextStyle(
+                    color: Colors.black,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -214,23 +254,31 @@ class _HistoireState extends State<Histoire> {
                     });
                   },
                 ),
-                const SizedBox(height: 30), // Ajout d'espace avant 'Choisir des Images'
-                const Center(
-                  child: Text(
-                    'Choisir des Images',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Center(
-                  child: IconButton(
-                    icon: const Icon(Icons.add_photo_alternate, size: 50, color: Colors.blue),
-                    onPressed: _pickFiles,
-                  ),
+                const SizedBox(height: 20), // Espacement avant le choix d'image
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _selectedFiles.isEmpty ? 'Choisir des Images' : '',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 8), // Espace entre le texte et l'icône
+                    IconButton(
+                      icon: const Icon(
+                        Icons.add_photo_alternate,
+                        color: Colors.black,
+                      ),
+                      onPressed: _pickFiles,
+                    ),
+                  ],
                 ),
                 if (_selectedFiles.isNotEmpty)
                   SizedBox(
-                    height: 100,
+                    height: 150,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       itemCount: _selectedFiles.length,
@@ -239,24 +287,20 @@ class _HistoireState extends State<Histoire> {
                           padding: const EdgeInsets.all(8.0),
                           child: Image.file(
                             _selectedFiles[index],
-                            width: 100,
-                            height: 100,
                             fit: BoxFit.cover,
                           ),
                         );
                       },
                     ),
                   ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 15),
                 Center(
                   child: ElevatedButton(
-                    onPressed: _addPost,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF914b14),
-                      padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      backgroundColor: const Color(0xFF914b14),
                     ),
-                    child: const Text('Poster', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    onPressed: _addPost,
+                    child: const Text('Publier'),
                   ),
                 ),
               ],
