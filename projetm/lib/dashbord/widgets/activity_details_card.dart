@@ -1,5 +1,7 @@
-import '../data/health_details.dart';
-import '../util/responsive.dart';
+// Les deteils d'activite en haut
+
+
+import '../const/responsive.dart';
 import '../widgets/custom_card_widget.dart';
 import 'package:flutter/material.dart';
 
@@ -54,3 +56,27 @@ class ActivityDetailsCard extends StatelessWidget {
     );
   }
 }
+
+// les classes
+
+class HealthDetails {
+  final healthData = const [
+    HealthModel(
+        icon: 'lib/assets/icons/burn.png', value: "305", title: "Calories burned"),
+    HealthModel(
+        icon: 'lib/assets/icons/steps.png', value: "10,983", title: "Steps"),
+    HealthModel(
+        icon: 'lib/assets/icons/distance.png', value: "7km", title: "Distance"),
+    HealthModel(icon: 'lib/assets/icons/sleep.png', value: "7h48m", title: "Sleep"),
+  ];
+}
+
+class HealthModel {
+  final String icon;
+  final String value;
+  final String title;
+
+  const HealthModel(
+      {required this.icon, required this.value, required this.title});
+}
+

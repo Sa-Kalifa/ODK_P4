@@ -10,6 +10,6 @@ class PublicationPage extends StatefulWidget {
 class _PublicationPageState extends State<PublicationPage> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return  Container(child: Text("_SignalePageState"),);
   }
 }

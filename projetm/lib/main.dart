@@ -15,7 +15,7 @@ import 'dashbord/screens/profile_page.dart';
 import 'dashbord/screens/publication_page.dart';
 import 'dashbord/screens/signale_page.dart';
 import 'dashbord/screens/user_page.dart';
-import 'mobiles/acceuil/app_bar.dart';
+import 'mobiles/introduction/intro_page.dart';
 
 
 void main() async {
@@ -46,27 +46,25 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.dark,
       ),
 
-      routes: {
-        // pour le Dashboard Admin
-        '/dashboard': (context) => MainScreen(),
-        '/utilisateur': (context) => UserPage(),
-        '/publication': (context) => PublicationPage(),
-        '/signale': (context) => SignalePage(),
-        '/profile_admin': (context) => ProfilePage(),
-        '/messager': (context) => MessagePage(),
+        routes: {
+          '/dashboard': (context) => MainScreen(),
+          '/utilisateur': (context) => UserPage(),
+          '/publication': (context) => PublicationPage(),
+          '/signale': (context) => SignalePage(),
+          '/profile_admin': (context) => ProfilePage(),
+          '/messager': (context) => MessagePage(),
+          '/login': (context) => LoginPage(),
+          '/accueil': (context) => Accueil(),
+          '/profile': (context) => Profile(),
+          '/inscription': (context) => Inscription(),
+          '/notification': (context) => NotificationPage(),
+          '/histoire': (context) => Histoire(),
+        },
 
-        // pour les Membre
-        '/login': (context) => LoginPage(),
-        '/accueil': (context) => Accueil(),
-        '/profile': (context) => Profile(),
-        '/inscription': (context) => Inscription(),
-        '/notification': (context) => NotificationPage(),
-        '/histoire': (context) => Histoire(),
-
-      },
-       // home: CustomBottomAppBar(currentIndex: 1,),
-      // home: Profile(),
-      home:  const LoginPage(),
+      home: IntroPage(),
+      // home: const MainScreen(),
+      //home:  const LoginPage(),
+      // Color(0xFF914b14)
     );
   }
 }

@@ -12,8 +12,8 @@ class Accueil extends StatefulWidget {
 class _AccueilState extends State<Accueil> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      bottomNavigationBar: const CustomBottomAppBar(currentIndex: 0),
+    return const Scaffold(
+      bottomNavigationBar: CustomBottomAppBar(currentIndex: 0),
     );
   }
 }

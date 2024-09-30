@@ -15,13 +15,14 @@ class _SignUpPageState extends State<Inscription> {
   String _email = '';
   String _password = '';
   String _confirmPassword = ''; // Nouvelle variable pour le champ de confirmation
-  String _name = '';
+  String _nom = '';
+  String _tel = ''; // Variable pour le numéro de téléphone
   String _role = 'Membre'; // Rôle par défaut
   bool _obscurePassword = true; // Variable pour cacher ou montrer le mot de passe
   bool _obscureConfirmPassword = true; // Variable pour cacher ou montrer la confirmation du mot de passe
 
   // Liste des rôles disponibles
-  List<String> roles = ['Membre', 'Admin'];
+  List<String> roles = ['Membre', 'Partenaire', 'Admin'];
 
   bool _isLoading = false;
 
@@ -41,18 +42,15 @@ class _SignUpPageState extends State<Inscription> {
 
         // Ajouter les détails de l'utilisateur dans Firestore
         await _firestore.collection('users').doc(userCredential.user!.uid).set({
-          'name': _name,
+          'nom': _nom,
           'email': _email,
+          'tel': _tel,
           'role': _role,
         });
 
-        // Afficher un message de succès
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Inscription réussie!')),
-        );
+        // Afficher un message de succès et rediriger
+        _showSuccessDialog();
 
-        // Rediriger vers la page d'accueil ou de connexion
-        Navigator.pop(context);
       } on FirebaseAuthException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Ce compte existe déjà. Veuillez vous connecter.')),
@@ -62,6 +60,48 @@ class _SignUpPageState extends State<Inscription> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  // Afficher le message de succès
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: const [
+              Icon(Icons.check_circle, color: Color(0xFF914b14)),
+              SizedBox(width: 10),
+              Text('Succès'),
+            ],
+          ),
+          content: const Text('Vous êtes inscrit avec succès!'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _redirectUserBasedOnRole();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Rediriger l'utilisateur selon son rôle
+  void _redirectUserBasedOnRole() {
+    switch (_role) {
+      case 'Admin':
+        Navigator.pushNamed(context, '/dashboard');
+        break;
+      case 'Partenaire':
+        Navigator.pushNamed(context, '/accueil');
+        break;
+      default: // Membre
+        Navigator.pushNamed(context, '/accueil');
     }
   }
 
@@ -77,7 +117,6 @@ class _SignUpPageState extends State<Inscription> {
           child: Column(
             children: <Widget>[
               const SizedBox(height: 15),
-
               // Logo et titre "S'INSCRIRE"
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -94,9 +133,7 @@ class _SignUpPageState extends State<Inscription> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 40),
-
               // Icônes Google et Facebook
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -118,9 +155,7 @@ class _SignUpPageState extends State<Inscription> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 30),
-
               const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -135,7 +170,6 @@ class _SignUpPageState extends State<Inscription> {
                 ],
               ),
               const SizedBox(height: 30),
-
               // Formulaire d'inscription
               Form(
                 key: _formKey,
@@ -144,7 +178,7 @@ class _SignUpPageState extends State<Inscription> {
                     TextFormField(
                       style: const TextStyle(color: Colors.black), // Texte en noir
                       decoration: const InputDecoration(
-                        labelText: 'Nom',
+                        labelText: 'Nom et Prenom',
                         prefixIcon: Icon(Icons.person, color: Colors.black),
                         labelStyle: TextStyle(color: Colors.black),
                         border: OutlineInputBorder(),
@@ -156,7 +190,7 @@ class _SignUpPageState extends State<Inscription> {
                         return null;
                       },
                       onChanged: (value) {
-                        _name = value;
+                        _nom = value;
                       },
                     ),
                     const SizedBox(height: 10),
@@ -211,12 +245,11 @@ class _SignUpPageState extends State<Inscription> {
                       },
                     ),
                     const SizedBox(height: 10),
-
                     // Nouveau champ : Confirmer le mot de passe
                     TextFormField(
                       style: const TextStyle(color: Colors.black), // Texte en noir
                       decoration: InputDecoration(
-                        labelText: 'Confirmer le mot de passe',
+                        labelText: 'Confirmer votre mot de passe',
                         prefixIcon: const Icon(Icons.lock, color: Colors.black),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -244,72 +277,94 @@ class _SignUpPageState extends State<Inscription> {
                       },
                     ),
                     const SizedBox(height: 10),
-                    DropdownButtonFormField<String>(
-                      value: _role,
-                      decoration: const InputDecoration(
-                        labelText: 'Rôle',
-                        border: OutlineInputBorder(),
-                        labelStyle: TextStyle(color: Colors.black),
-                      ),
-                      items: roles.map((String role) {
-                        return DropdownMenuItem<String>(
-                          value: role,
-                          child: Text(role, style: const TextStyle(color: Colors.black)),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _role = value!;
-                        });
-                      },
+                    // Champ de saisie Téléphone + Sélecteur de rôle dans la même ligne
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            style: const TextStyle(color: Colors.black), // Texte en noir
+                            decoration: const InputDecoration(
+                              labelText: 'Téléphone',
+                              prefixIcon: Icon(Icons.phone, color: Colors.black),
+                              labelStyle: TextStyle(color: Colors.black),
+                              border: OutlineInputBorder(),
+                            ),
+                            keyboardType: TextInputType.phone,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Veuillez entrer votre numéro de téléphone';
+                              }
+                              return null;
+                            },
+                            onChanged: (value) {
+                              _tel = value;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // Sélecteur de rôle
+                        DropdownButton<String>(
+                          value: _role,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _role = newValue!;
+                            });
+                          },
+                          items: roles.map((String role) {
+                            return DropdownMenuItem<String>(
+                              value: role,
+                              child: Text(
+                                role,
+                                style: const TextStyle(color: Colors.black), // Texte en noir
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 20),
-
-                    // Bouton Enregistrer
                     ElevatedButton(
                       onPressed: _signUp,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF914b14), // Couleur du bouton
-                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 50),
-                        textStyle: const TextStyle(fontSize: 18),
+                        backgroundColor: Color(0xFF914b14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
                       ),
                       child: const Text(
-                        "Enregistrer",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                            color: Colors.white),
+                        'S\'INSCRIRE',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
+                    ),
+                    const SizedBox(height: 60),
+
+                    // Lien vers la page de connexion
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        const Text(
+                          "Si Vous avez un compte ? ",
+                          style: TextStyle(
+                            color: Colors.black,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(context, '/login');
+                          },
+                          child: const Text(
+                            "Connecter Vous",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF914b14), // Couleur du lien
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ),
-
-              const SizedBox(height: 60),
-
-              // Lien vers la page de connexion
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  const Text(
-                    "Si Vous avez un compte ? ",
-                    style: TextStyle(
-                      color: Colors.black,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, '/login');
-                    },
-                    child: const Text(
-                      "Connecter Vous",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF914b14), // Couleur du lien
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ],
           ),

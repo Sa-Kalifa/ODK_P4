@@ -1,7 +1,7 @@
-import '../util/responsive.dart';
+import '../const/responsive.dart';
 import '../widgets/dashboard_widget.dart';
-import '../widgets/side_menu_widget.dart';
-import '../widgets/summary_widget.dart';
+import '../widgets/menu_widget.dart';
+import '../widgets/ddroite_widget.dart';
 import 'package:flutter/material.dart';
 
 class MainScreen extends StatelessWidget {
@@ -21,7 +21,7 @@ class MainScreen extends StatelessWidget {
       endDrawer: Responsive.isMobile(context)
           ? SizedBox(
               width: MediaQuery.of(context).size.width * 0.8,
-              child: const SummaryWidget(),
+              child: const DdroiteWidget(),
             )
           : null,
       body: SafeArea(
@@ -41,7 +41,7 @@ class MainScreen extends StatelessWidget {
             if (isDesktop)
               Expanded(
                 flex: 3,
-                child: SummaryWidget(),
+                child: DdroiteWidget(),
               ),
           ],
         ),

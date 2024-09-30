@@ -1,5 +1,7 @@
+// Entete du Dashbord rechercher
+
 import '../const/constant.dart';
-import '../util/responsive.dart';
+import '../const/responsive.dart';
 import 'package:flutter/material.dart';
 
 class HeaderWidget extends StatelessWidget {
@@ -44,7 +46,7 @@ class HeaderWidget extends StatelessWidget {
                 contentPadding: const EdgeInsets.symmetric(
                   vertical: 5,
                 ),
-                hintText: 'Search',
+                hintText: 'Rechercher',
                 prefixIcon: const Icon(
                   Icons.search,
                   color: Colors.grey,

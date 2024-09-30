@@ -52,7 +52,6 @@ class _CustomBottomAppBarState extends State<CustomBottomAppBar> {
           case 3:
             Navigator.pushNamed(context, '/profile');
             break;
-
         }
       },
     );

@@ -10,6 +10,6 @@ class SignalePage extends StatefulWidget {
 class _SignalePageState extends State<SignalePage> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(body: Container(child: Text("_SignalePageState"),));
   }
 }

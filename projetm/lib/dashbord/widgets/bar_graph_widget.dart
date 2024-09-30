@@ -1,5 +1,5 @@
-import '../data/bar_graph_data.dart';
-import '../model/graph_model.dart';
+// Les barres de progression en bas au millieux
+
 import '../widgets/custom_card_widget.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -102,3 +102,61 @@ class BarGraphCard extends StatelessWidget {
         .toList();
   }
 }
+
+// Les barres de progression en bas au millieux
+
+class BarGraphData {
+  final data = [
+    const BarGraphModel(
+        label: "Niveau d'activité",
+        color: Color(0xFF914b14),
+        graph: [
+          GraphModel(x: 0, y: 8),
+          GraphModel(x: 1, y: 10),
+          GraphModel(x: 2, y: 7),
+          GraphModel(x: 3, y: 4),
+          GraphModel(x: 4, y: 4),
+          GraphModel(x: 5, y: 6),
+        ]),
+    const BarGraphModel(label: "Histoire plublie", color: Color(0xFFFAF3E0), graph: [
+      GraphModel(x: 0, y: 8),
+      GraphModel(x: 1, y: 10),
+      GraphModel(x: 2, y: 9),
+      GraphModel(x: 3, y: 6),
+      GraphModel(x: 4, y: 6),
+      GraphModel(x: 5, y: 7),
+    ]),
+    const BarGraphModel(
+        label: "Niveau de Signalement",
+        color: Color(0xFFF6A25F),
+        graph: [
+          GraphModel(x: 0, y: 7),
+          GraphModel(x: 1, y: 10),
+          GraphModel(x: 2, y: 7),
+          GraphModel(x: 3, y: 4),
+          GraphModel(x: 4, y: 4),
+          GraphModel(x: 5, y: 10),
+        ]),
+  ];
+
+  final label = ['L', 'M', 'MER', 'J', 'V', 'S'];
+}
+
+// les classe pour Les barres de progression en bas au millieux
+
+class BarGraphModel {
+  final String label;
+  final Color color;
+  final List<GraphModel> graph;
+
+  const BarGraphModel(
+      {required this.label, required this.color, required this.graph});
+}
+
+class GraphModel {
+  final double x;
+  final double y;
+
+  const GraphModel({required this.x, required this.y});
+}
+

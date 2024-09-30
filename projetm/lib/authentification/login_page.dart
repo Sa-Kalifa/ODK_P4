@@ -90,7 +90,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 238, 236, 236),
+      backgroundColor: Color(0xFFFAF3E0),
       body: SafeArea(
         child: Center(
           child: Form(
@@ -244,6 +244,11 @@ class RoleManager {
               MaterialPageRoute(builder: (context) => MainScreen()),
             );
           } else if (role == 'Membre') {
+            print("Redirection vers Accueil");
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => Accueil()),
+            );
+          } else if (role == 'Partenaire') {
             print("Redirection vers Accueil");
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => Accueil()),

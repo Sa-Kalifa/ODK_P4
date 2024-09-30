@@ -14,7 +14,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   // Déclaration des TextEditingControllers
   final TextEditingController _nomController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _telephoneController = TextEditingController();
+  final TextEditingController _telController = TextEditingController();
 
   bool _isLoading = true; // Indicateur de chargement
 
@@ -29,7 +29,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     // Dispose des contrôleurs pour éviter les fuites de mémoire
     _nomController.dispose();
     _emailController.dispose();
-    _telephoneController.dispose();
+    _telController.dispose();
     super.dispose();
   }
 
@@ -49,7 +49,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           setState(() {
             _nomController.text = userDoc['nom'] ?? '';
             _emailController.text = userDoc['email'] ?? '';
-            _telephoneController.text = userDoc['telephone'] ?? '';
+            _telController.text = userDoc['tel'] ?? '';
             _isLoading = false; // Données chargées
           });
         } else {
@@ -82,9 +82,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Future<void> _submitForm() async {
     if (_formKey.currentState?.validate() ?? false) {
       // Sauvegarder les valeurs des contrôleurs
-      String nomPrenom = _nomController.text.trim();
+      String nom = _nomController.text.trim();
       String email = _emailController.text.trim();
-      String telephone = _telephoneController.text.trim();
+      String tel = _telController.text.trim();
 
       try {
         User? user = FirebaseAuth.instance.currentUser;
@@ -95,9 +95,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
               .collection('users')
               .doc(userId)
               .update({
-            'nom': nomPrenom,
+            'nom': nom,
             'email': email,
-            'telephone': telephone,
+            'tel' : tel,
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
@@ -194,7 +194,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               SizedBox(height: 16),
 
               TextFormField(
-                controller: _telephoneController,
+                controller: _telController,
                 decoration: InputDecoration(
                   labelText: 'Téléphone',
                   labelStyle: TextStyle(color: Colors.black), // Couleur du label en noir
@@ -204,21 +204,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                style: TextStyle(color: Colors.black), // Couleur du texte saisi en noir
+                style: const TextStyle(color: Colors.black), // Couleur du texte saisi en noir
                 keyboardType: TextInputType.phone,
                 validator: (value) =>
                 value == null || value.trim().isEmpty ? 'Veuillez entrer votre numéro de téléphone' : null,
               ),
 
 
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
               // Bouton Enregistrer
               Center(
                 child: ElevatedButton(
                   onPressed: _submitForm,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF914B14), // Couleur du bouton
-                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                    backgroundColor: const Color(0xFF914B14), // Couleur du bouton
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),

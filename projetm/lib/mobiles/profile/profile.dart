@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import '../acceuil/app_bar.dart';
 import 'edit_profile_page.dart';
 
@@ -12,8 +11,8 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> {
   User? currentUser;
-  String userName = 'Inconnu'; // Placeholder par défaut
-  String userRole = 'Inconnu'; // Placeholder par défaut
+  String userName = 'Chargement...'; // Placeholder par défaut pour le nom
+  String userRole = 'Chargement...'; // Placeholder par défaut pour le rôle
 
   @override
   void initState() {
@@ -24,7 +23,10 @@ class _ProfileState extends State<Profile> {
   // Récupérer les données de l'utilisateur connecté depuis Firestore
   Future<void> _getUserData() async {
     currentUser = FirebaseAuth.instance.currentUser;
+
     if (currentUser != null) {
+      print("UID de l'utilisateur connecté : ${currentUser!.uid}");
+
       try {
         // Requête Firestore pour récupérer les données de l'utilisateur
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
@@ -32,15 +34,27 @@ class _ProfileState extends State<Profile> {
             .doc(currentUser!.uid) // ID de l'utilisateur connecté
             .get();
 
+        // Vérifiez si le document existe
         if (userDoc.exists) {
+          print("Données de l'utilisateur récupérées : ${userDoc.data()}");
+
           setState(() {
-            userName = userDoc['nom']; // Nom de l'utilisateur
-            userRole = userDoc['role']; // Rôle de l'utilisateur
+            userName = userDoc['nom'] ?? 'Nom non disponible'; // Nom de l'utilisateur
+            userRole = userDoc['role'] ?? 'Rôle non disponible'; // Rôle de l'utilisateur
           });
+        } else {
+          print("Aucun document trouvé pour cet utilisateur.");
         }
       } catch (e) {
-        print('Erreur lors de la récupération des données: $e');
+        print('Erreur lors de la récupération des données Firestore: $e');
+
+        if (e is FirebaseException) {
+          print('Code de l\'erreur Firestore: ${e.code}');
+          print('Message d\'erreur Firestore: ${e.message}');
+        }
       }
+    } else {
+      print("Aucun utilisateur connecté.");
     }
   }
 
@@ -56,7 +70,9 @@ class _ProfileState extends State<Profile> {
     return Scaffold(
       backgroundColor: const Color(0xFFFAF3E0),
       appBar: AppBar(
-        title: const Text('Profil', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30, color: Colors.black)),
+        title: const Text(
+            'Profil',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30, color: Colors.black)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -78,7 +94,7 @@ class _ProfileState extends State<Profile> {
             Center(
               child: Text(
                 userName,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF914b14)),
               ),
             ),
             // Affichage du rôle récupéré de Firestore
@@ -93,9 +109,7 @@ class _ProfileState extends State<Profile> {
               leading: const Icon(Icons.edit, color: Color(0xFF914b14)),
               title: const Text(
                 'Modifier son Compte',
-                style: TextStyle(
-                  color: Colors.black
-                ),
+                style: TextStyle(color: Colors.black),
               ),
               onTap: () {
                 Navigator.push(
@@ -107,10 +121,8 @@ class _ProfileState extends State<Profile> {
             ListTile(
               leading: const Icon(Icons.bookmarks_outlined, color: Color(0xFF914b14)),
               title: const Text(
-                  'Mes Publication',
-                style: TextStyle(
-                    color: Colors.black
-                ),
+                'Mes Publications',
+                style: TextStyle(color: Colors.black),
               ),
               onTap: () {
                 Navigator.push(
@@ -122,10 +134,8 @@ class _ProfileState extends State<Profile> {
             ListTile(
               leading: const Icon(Icons.quiz_outlined, color: Color(0xFF914b14)),
               title: const Text(
-                  'Mes Publication',
-                style: TextStyle(
-                    color: Colors.black
-                ),
+                'Mes Quizz',
+                style: TextStyle(color: Colors.black),
               ),
               onTap: () {
                 Navigator.push(
@@ -137,10 +147,8 @@ class _ProfileState extends State<Profile> {
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text(
-                  'Se Déconnecter',
-                style: TextStyle(
-                    color: Colors.black
-                ),
+                'Se Déconnecter',
+                style: TextStyle(color: Colors.black),
               ),
               onTap: () {
                 _signOut();
@@ -149,7 +157,7 @@ class _ProfileState extends State<Profile> {
           ],
         ),
       ),
-        bottomNavigationBar: const CustomBottomAppBar(currentIndex: 3),
+      bottomNavigationBar: const CustomBottomAppBar(currentIndex: 3),
     );
   }
 }
