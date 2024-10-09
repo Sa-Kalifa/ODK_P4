@@ -84,10 +84,15 @@ class PostDetailPage extends StatelessWidget {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 15),
+
+                        // Remplacez l'ancien affichage des images par ceci :
                         if (mediaUrls.isNotEmpty) ...[
-                          Image.network(mediaUrls[0]), // Affiche la première image du post
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 10), // Ajoute un espacement au-dessus
+                          _buildImages(mediaUrls), // Appel à la méthode pour afficher les images
+                          const SizedBox(height: 10), // Ajoute un espacement en dessous
                         ],
+
                         const SizedBox(height: 10),
                         Text(titre, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                         Text(description, style: const TextStyle(fontSize: 18)),
@@ -185,4 +190,26 @@ class PostDetailPage extends StatelessWidget {
   void _showPostOptions(Map<String, dynamic> post) {
     // Affiche les options de modification ou suppression du post
   }
+
+  Widget _buildImages(List<dynamic> mediaUrls) {
+    if (mediaUrls.isNotEmpty) {
+      return Column(
+        children: mediaUrls.map<Widget>((url) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0), // Espacement vertical entre les images
+            child: Image.network(
+              url,
+              fit: BoxFit.cover, // Ajuste l'image pour couvrir l'espace
+              height: 200, // Hauteur fixe pour toutes les images
+              width: double.infinity, // Largeur maximale
+            ),
+          );
+        }).toList(),
+      );
+    } else {
+      return const SizedBox.shrink(); // Si aucune image n'est disponible
+    }
+  }
+
+
 }
