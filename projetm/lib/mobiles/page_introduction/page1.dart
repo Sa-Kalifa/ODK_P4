@@ -10,33 +10,47 @@ class Page1 extends StatefulWidget {
 class _Page1State extends State<Page1> {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Image.asset("lib/assets/images/anonymous.png"),
-        const SizedBox(height: 40,),
-        const Text(
-            "Avec sa je veut que tu as de l'admiration",
-          style: TextStyle(
-            fontWeight: FontWeight.w400,
-            fontSize: 24,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 40,),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
-              "Si vous ete la c'est que vous avez de la chance, on a un systeme de coach adapter de toute type de proble",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w300,
-              color: Colors.black.withOpacity(0.6),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Page Contenue Ajustée"),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Réduction de la taille de l'image en utilisant width et height
+            Image.asset(
+              "lib/assets/images/anonymous.png",
+              width: 150, // Largeur de l'image réduite
+              height: 150, // Hauteur de l'image réduite
             ),
-            textAlign: TextAlign.center,
-         ),
-        )
-      ],
+            const SizedBox(height: 30),
+            const Text(
+              "Avec ça je veux que tu aies de l'admiration",
+              style: TextStyle(
+                fontWeight: FontWeight.w400,
+                fontSize: 24,
+                color: Colors.black,
+              ),
+              textAlign: TextAlign.center, // Centrer le texte
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                "Si vous êtes là, c'est que vous avez de la chance. "
+                    "Nous avons un système de coaching adapté à tout type de problème.",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w300,
+                  color: Colors.black.withOpacity(0.6),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

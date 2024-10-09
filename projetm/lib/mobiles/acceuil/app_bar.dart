@@ -30,7 +30,7 @@ class _CustomBottomAppBarState extends State<CustomBottomAppBar> {
       items: <Widget>[
         Icon(Icons.home, size: 30, color: _selectedIndex == 0 ? Color(0xFFFAF3E0) : Colors.white),
         Icon(Icons.add_circle_sharp, size: 30, color: _selectedIndex == 1 ? Color(0xFFFAF3E0) : Colors.white),
-        Icon(Icons.notifications, size: 30, color: _selectedIndex == 2 ? Color(0xFFFAF3E0) : Colors.white),
+        Icon(Icons.chat, size: 30, color: _selectedIndex == 2 ? Color(0xFFFAF3E0) : Colors.white),
         Icon(Icons.person, size: 30, color: _selectedIndex == 3 ? Color(0xFFFAF3E0) : Colors.white),
       ],
       onTap: (index) {

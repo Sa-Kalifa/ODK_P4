@@ -121,8 +121,8 @@ class _SignUpPageState extends State<Inscription> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset('lib/assets/images/Logo01.png', height: 50), // Logo
-                  const SizedBox(width: 60),
+                  Image.asset('lib/assets/images/Logo01.png', height: 60), // Logo
+                  const SizedBox(width: 120),
                   const Text(
                     "S'INSCRIRE",
                     style: TextStyle(
@@ -139,7 +139,7 @@ class _SignUpPageState extends State<Inscription> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   IconButton(
-                    icon: Image.asset('lib/assets/images/google.png'),
+                    icon: Image.asset('lib/assets/images/google.png',),
                     iconSize: 40,
                     onPressed: () {
                       // Logique de connexion Google
@@ -147,7 +147,7 @@ class _SignUpPageState extends State<Inscription> {
                   ),
                   const SizedBox(width: 20),
                   IconButton(
-                    icon: Image.asset('lib/assets/images/facebook.png'),
+                    icon: Image.asset('lib/assets/images/anonymous.png',),
                     iconSize: 40,
                     onPressed: () {
                       // Logique de connexion Facebook
@@ -322,7 +322,7 @@ class _SignUpPageState extends State<Inscription> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 40),
                     ElevatedButton(
                       onPressed: _signUp,
                       style: ElevatedButton.styleFrom(
@@ -333,8 +333,8 @@ class _SignUpPageState extends State<Inscription> {
                         padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
                       ),
                       child: const Text(
-                        'S\'INSCRIRE',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        'S\' inscrire',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                     ),
                     const SizedBox(height: 60),

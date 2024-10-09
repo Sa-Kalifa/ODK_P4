@@ -1,8 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-import '../dashbord/screens/main_screen.dart';
 import '../mobiles/acceuil/accueil.dart';
 
 
@@ -241,7 +239,7 @@ class RoleManager {
           if (role == 'Admin') {
             print("Redirection vers AdminDashboard");
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => MainScreen()),
+              MaterialPageRoute(builder: (context) => Accueil()),
             );
           } else if (role == 'Membre') {
             print("Redirection vers Accueil");

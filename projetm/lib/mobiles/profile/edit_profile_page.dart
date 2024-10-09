@@ -127,10 +127,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Scaffold(
       backgroundColor: Color(0xFFFAF3E0),
       appBar: AppBar(
-        title: const Text(
-          'Modifier Compte',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
-        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -139,11 +135,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
             Navigator.pop(context);
           },
         ),
+        title: const Text(
+          'Modifier Compte',
+          style: TextStyle(
+              fontSize: 30, fontWeight: FontWeight.bold,
+              color: Colors.black),
+        ),
       ),
       body: _isLoading
           ? Center(child: CircularProgressIndicator()) // Indicateur de chargement
           : SingleChildScrollView(
-        padding: const EdgeInsets.all(40.0),
+        padding: const EdgeInsets.symmetric(vertical: 100.0, horizontal: 20.0),
         child: Form(
           key: _formKey,
           child: Column(
@@ -165,7 +167,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 validator: (value) =>
                 value == null || value.trim().isEmpty ? 'Veuillez entrer votre nom et prénom' : null,
               ),
-              SizedBox(height: 16),
+              SizedBox(height: 30),
 
               TextFormField(
                 controller: _emailController,
@@ -191,7 +193,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   return null;
                 },
               ),
-              SizedBox(height: 16),
+              SizedBox(height: 30),
 
               TextFormField(
                 controller: _telController,
@@ -211,7 +213,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
 
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 40),
               // Bouton Enregistrer
               Center(
                 child: ElevatedButton(

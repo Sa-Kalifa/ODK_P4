@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../dashbord/screens/main_screen.dart';
 import '../mobiles/acceuil/accueil.dart';
 import 'login_page.dart';
 
@@ -30,7 +29,7 @@ class AuthPage extends StatelessWidget {
                   final role = snapshot.data!['role'];
 
                   if (role == 'Admin') {
-                    return  MainScreen();
+                    return  Accueil();
                   } else if (role == 'Membre') {
                     return  Accueil();
                   }
