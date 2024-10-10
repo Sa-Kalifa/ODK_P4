@@ -36,6 +36,7 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.light,
         primaryColor: const Color(0xFF914B14), // Couleur principale de l'application
       ),
+      // routerConfig: routerConfig,
       routes: {
         // Routes pour la navigation
         /*

@@ -18,6 +18,22 @@ class PostDetailPage extends StatelessWidget {
     final DateTime? createdAt = (post['createdAt'] as Timestamp?)?.toDate();
     final List<dynamic> mediaUrls = post['mediaUrls'] ?? [];
 
+    // Récupérer l'identifiant de l'histoire à partir des données du post ou du documentId
+    final String? histoireId = post['id'] ?? post['documentId'];
+
+    // Vérifiez si l'identifiant est disponible
+    if (histoireId == null || histoireId.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Erreur'),
+          backgroundColor: const Color(0xFF914b14),
+        ),
+        body: const Center(
+          child: Text("L'identifiant de l'histoire est manquant"),
+        ),
+      );
+    }
+
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
       builder: (context, snapshot) {
@@ -103,7 +119,7 @@ class PostDetailPage extends StatelessWidget {
                         StreamBuilder<QuerySnapshot>(
                           stream: FirebaseFirestore.instance
                               .collection('histoires')
-                              .doc(post['id'])
+                              .doc(histoireId) // Utilisation de l'identifiant récupéré
                               .collection('commentaires')
                               .orderBy('createdAt', descending: true)
                               .snapshots(),
@@ -121,10 +137,41 @@ class PostDetailPage extends StatelessWidget {
                                 final String commenterName = comment['userName'] ?? 'Utilisateur inconnu';
                                 final String commentText = comment['comment'] ?? '';
 
-                                return ListTile(
-                                  title: Text(commenterName,
-                                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  subtitle: Text(commentText),
+                                return Card(
+                                  margin: const EdgeInsets.symmetric(vertical: 8.0),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(10.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(commenterName,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold, fontSize: 16)),
+                                        const SizedBox(height: 5),
+                                        Text(commentText),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            TextButton(
+                                              onPressed: () {
+                                                // Logique pour signaler le commentaire
+                                              },
+                                              child: const Text('Signaler'),
+                                            ),
+                                            if (FirebaseAuth.instance.currentUser?.uid == comment['userId'] ||
+                                                userDoc['role'] == 'admin' ||
+                                                userDoc['role'] == 'partenaire')
+                                              TextButton(
+                                                onPressed: () {
+                                                  // Logique pour supprimer le commentaire
+                                                },
+                                                child: const Text('Supprimer'),
+                                              ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 );
                               },
                             );
@@ -164,7 +211,7 @@ class PostDetailPage extends StatelessWidget {
 
                           await FirebaseFirestore.instance
                               .collection('histoires')
-                              .doc(post['id'])
+                              .doc(histoireId) // Utilisation de l'ID d'histoire récupéré
                               .collection('commentaires')
                               .add({
                             'userId': userId,
@@ -210,6 +257,4 @@ class PostDetailPage extends StatelessWidget {
       return const SizedBox.shrink(); // Si aucune image n'est disponible
     }
   }
-
-
 }
