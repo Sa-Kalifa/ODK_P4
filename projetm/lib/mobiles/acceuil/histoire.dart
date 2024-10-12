@@ -51,7 +51,7 @@ class _HistoireState extends State<Histoire> {
     if (result != null) {
       setState(() {
         _selectedFiles = result.paths.map((path) => File(path!)).toList();
-        print('Fichiers sélectionnés : ${_selectedFiles.length}'); // Vérifiez le nombre de fichiers sélectionnés
+        print('Fichiers sélectionnés : ${_selectedFiles.length}');
       });
     }
   }
@@ -66,7 +66,7 @@ class _HistoireState extends State<Histoire> {
 
       final snapshot = await uploadTask!.whenComplete(() {});
       final urlDownload = await snapshot.ref.getDownloadURL();
-      print('Fichier uploadé : $urlDownload'); // Vérifiez l'URL du fichier uploadé
+      print('Fichier uploadé : $urlDownload');
       return urlDownload;
     } catch (e) {
       print('Erreur lors de l\'upload: $e');
@@ -79,8 +79,6 @@ class _HistoireState extends State<Histoire> {
     if (user == null) {
       print("Utilisateur non authentifié. Veuillez vous connecter.");
       return;
-    } else {
-      print("Utilisateur connecté : ${user?.email}");
     }
 
     if (!_formKey.currentState!.validate()) {
@@ -92,7 +90,6 @@ class _HistoireState extends State<Histoire> {
     });
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
       final List<String> uploadedFilesUrls = [];
 
       // Uploader les fichiers sélectionnés
@@ -103,7 +100,6 @@ class _HistoireState extends State<Histoire> {
         }
       }
 
-      // Afficher un message si aucun fichier n'a été uploadé
       if (uploadedFilesUrls.isEmpty) {
         print('Aucun fichier n\'a été uploadé.');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -121,15 +117,13 @@ class _HistoireState extends State<Histoire> {
         'userName': _isAnonymous ? 'Anonyme' : (user?.displayName ?? user?.email ?? 'Nom non disponible'),
         'userPhoto': _isAnonymous ? '' : (user?.photoURL ?? ''),
         'createdAt': Timestamp.now(),
-        'mediaUrls': uploadedFilesUrls, // Ajouter les URL des fichiers uploadés
+        'mediaUrls': uploadedFilesUrls,
       });
 
-      // Afficher un message de confirmation
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Histoire ajoutée avec succès !')),
       );
 
-      // Réinitialiser le formulaire après l'ajout
       _titre.clear();
       _description.clear();
       setState(() {
@@ -144,19 +138,30 @@ class _HistoireState extends State<Histoire> {
     }
   }
 
+  // Fonction pour récupérer les informations de l'utilisateur depuis Firestore
+  Future<Map<String, dynamic>?> getUserInfo() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      return userDoc.data();
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-
     return Scaffold(
       backgroundColor: const Color(0xFFFAF3E0),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFAF3E0),
+        backgroundColor: const Color(0xFF914b14),
         title: const Center(
           child: Text(
             'Ajouter une Histoire',
             style: TextStyle(
-              color: Colors.black,
+              color: Colors.white,
               fontWeight: FontWeight.bold,
               fontSize: 25,
             ),
@@ -166,241 +171,252 @@ class _HistoireState extends State<Histoire> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-        padding: const EdgeInsets.all(30),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (user != null)
-                  Row(
+          : FutureBuilder<Map<String, dynamic>?>(
+        future: getUserInfo(), // Récupérer les informations de l'utilisateur
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return const Center(child: Text('Erreur lors du chargement des données'));
+          }
+          if (snapshot.hasData && snapshot.data != null) {
+            final userData = snapshot.data!;
+            final userPhoto = userData['image_url'] ?? '';
+            final userEmail = userData['email'] ?? 'Email non disponible';
+
+            return Padding(
+              padding: const EdgeInsets.all(30),
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CircleAvatar(
-                        backgroundImage: NetworkImage(user.photoURL ?? ''),
-                        radius: 20,
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundImage: NetworkImage(userPhoto),
+                            radius: 20,
+                          ),
+                          const SizedBox(width: 15),
+                          Text(
+                            _isAnonymous ? 'Anonyme' : userEmail,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                          const Spacer(),
+                          Switch(
+                            value: _isAnonymous,
+                            onChanged: (value) {
+                              setState(() {
+                                _isAnonymous = value;
+                              });
+                            },
+                            activeColor: const Color(0xFF914b14),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 15),
-                      Text(
-                        _isAnonymous ? 'Anonyme' : (user.displayName ?? user.email ?? 'Nom non disponible'),
+                      const SizedBox(height: 50),
+                      TextFormField(
+                        controller: _titre,
+                        decoration: const InputDecoration(
+                          labelText: 'Titre',
+                          labelStyle: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                          border: OutlineInputBorder(),
+                        ),
                         style: const TextStyle(
                           color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
                         ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Veuillez entrer un titre';
+                          }
+                          return null;
+                        },
                       ),
-                      const Spacer(),
-                      Switch(
-                        value: _isAnonymous,
-                        onChanged: (value) {
+                      const SizedBox(height: 15),
+                      DropdownButtonFormField<String>(
+                        value: _categorie,
+                        decoration: const InputDecoration(
+                          labelText: 'Catégorie',
+                          labelStyle: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Color(0xFFFAF3E0),
+                        ),
+                        style: const TextStyle(color: Colors.black),
+                        dropdownColor: Colors.white,
+                        onChanged: (newValue) {
                           setState(() {
-                            _isAnonymous = value;
+                            _categorie = newValue!;
                           });
                         },
-                        activeColor: const Color(0xFF914b14),
-                      ),
-                    ],
-                  ),
-                const SizedBox(height: 50),
-                TextFormField(
-                  controller: _titre,
-                  decoration: const InputDecoration(
-                    labelText: 'Titre',
-                    labelStyle: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                    border: OutlineInputBorder(),
-                  ),
-                  style: const TextStyle(
-                    color: Colors.black,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer un titre';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 15),
-                DropdownButtonFormField<String>(
-                  value: _categorie,
-                  decoration: const InputDecoration(
-                    labelText: 'Catégorie',
-                    labelStyle: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                    border: OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Color(0xFFFAF3E0), // Couleur de fond du champ
-                  ),
-                  style: const TextStyle(color: Colors.black), // Style de texte général
-                  dropdownColor: Colors.white, // Couleur de fond du menu déroulant
-                  onChanged: (newValue) {
-                    setState(() {
-                      _categorie = newValue!;
-                    });
-                  },
-                  // This property controls the appearance of the selected item
-                  selectedItemBuilder: (BuildContext context) {
-                    return _categories.map((String value) {
-                      return Container(
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 2.0),
-                        child: Text(
-                          value,
-                          style: const TextStyle(
-                            color: Colors.black, // Assurer que le texte reste noir
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      );
-                    }).toList();
-                  },
-                  items: _categories.map((String category) {
-                    return DropdownMenuItem<String>(
-                      value: category,
-                      child: Container(
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-                        color: Colors.white, // Couleur de fond des éléments du menu
-                        child: Text(
-                          category,
-                          style: const TextStyle(
-                            color: Colors.black, // Couleur du texte des éléments
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                  validator: (value) {
-                    if (value == null) {
-                      return 'Veuillez sélectionner une catégorie';
-                    }
-                    return null;
-                  },
-                ),const SizedBox(height: 15),
-                TextFormField(
-                  controller: _description,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    labelStyle: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                    border: OutlineInputBorder(),
-                  ),
-                  style: const TextStyle(
-                    color: Colors.black,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer une description';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                // Remplacez cette partie de votre code par les modifications suivantes :
-                Center(
-                  child: Column(
-                    children: [
-                      GestureDetector(
-                        onTap: _pickFiles, // Utiliser la fonction de sélection de fichiers existante
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFF914b14)),
-                            color: Colors.white,
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.photo_library, // Icône de la galerie
-                                color: Color(0xFF914b14),
-                              ),
-                              SizedBox(width: 10),
-                              Text(
-                                'Sélectionner des ressources', // Texte à côté de l'icône
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF914b14),
+                        selectedItemBuilder: (BuildContext context) {
+                          return _categories.map((String value) {
+                            return Container(
+                              alignment: Alignment.centerLeft,
+                              padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 2.0),
+                              child: Text(
+                                value,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      // Afficher les fichiers sélectionnés (sous forme de vignettes ou de texte)
-                      _selectedFiles.isNotEmpty
-                          ? Column(
-                        children: _selectedFiles.map((file) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 5.0),
+                            );
+                          }).toList();
+                        },
+                        items: _categories.map((String category) {
+                          return DropdownMenuItem<String>(
+                            value: category,
                             child: Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF0E1D1),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: const Color(0xFF914b14)),
-                              ),
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    file.path.split('/').last, // Nom du fichier
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _selectedFiles.remove(file); // Retirer le fichier de la liste
-                                      });
-                                    },
-                                  ),
-                                ],
+                              alignment: Alignment.centerLeft,
+                              padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                              color: Colors.white,
+                              child: Text(
+                                category,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           );
                         }).toList(),
-                      )
-                          : Container(), // Ne rien afficher si aucun fichier sélectionné
+                      ),
+                      const SizedBox(height: 15),
+                      TextFormField(
+                        controller: _description,
+                        maxLines: 4,
+                        decoration: const InputDecoration(
+                          labelText: 'Description',
+                          labelStyle: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                          border: OutlineInputBorder(),
+                        ),
+                        style: const TextStyle(
+                          color: Colors.black,
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Veuillez entrer une description';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 15),
+                      Center(
+                        child: Column(
+                          children: [
+                            GestureDetector(
+                              onTap: _pickFiles, // Utiliser la fonction de sélection de fichiers existante
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color(0xFF914b14)),
+                                  color: Colors.white,
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.photo_library, // Icône de la galerie
+                                      color: Color(0xFF914b14),
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      'Sélectionner des ressources', // Texte à côté de l'icône
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF914b14),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            // Afficher les fichiers sélectionnés (sous forme de vignettes ou de texte)
+                            _selectedFiles.isNotEmpty
+                                ? Column(
+                              children: _selectedFiles.map((file) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 5.0),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF0E1D1),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: const Color(0xFF914b14)),
+                                    ),
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          file.path.split('/').last, // Nom du fichier
+                                          style: const TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.delete,
+                                            color: Colors.red,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _selectedFiles.remove(file); // Retirer le fichier de la liste
+                                            });
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            )
+                                : Container(), // Ne rien afficher si aucun fichier sélectionné
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: _addStory,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF914b14),
+                          ),
+                          child: const Text('Publier', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 20),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: _addStory,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF914b14),
-                    ),
-                    child: const Text('Publier', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+              ),
+            );
+          } else {
+            return const Center(child: Text('Utilisateur non trouvé'));
+          }
+        },
       ),
       bottomNavigationBar: const CustomBottomAppBar(currentIndex: 1),
     );

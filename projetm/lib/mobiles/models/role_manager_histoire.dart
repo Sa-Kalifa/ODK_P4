@@ -6,20 +6,6 @@ import 'package:flutter/material.dart';
 class RoleManager {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  Future<bool> _isPartner() async {
-    final currentUser = _auth.currentUser;
-
-    if (currentUser != null) {
-      final snapshot = await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).get();
-      if (snapshot.exists) {
-        final role = snapshot['role'];
-        return role == 'Partenaire';
-      }
-    }
-
-    return false;
-  }
-
   Future<bool> _isAdminOrPartnerOrOwner(String postUserId) async {
     final currentUser = _auth.currentUser;
 
@@ -38,7 +24,7 @@ class RoleManager {
     return false;
   }
 
-  void _showPostOptions(BuildContext context, Map<String, dynamic> histoires, String userId) async {
+  void _showPostOptions(BuildContext context, String postId, Map<String, dynamic> histoires, String userId) async {
     final currentUser = FirebaseAuth.instance.currentUser;
 
     final bool isOwnerOrPartner = currentUser?.uid == userId || await _isAdminOrPartnerOrOwner(userId);
@@ -49,14 +35,6 @@ class RoleManager {
         return ListView(
           shrinkWrap: true,
           children: [
-            if (currentUser?.uid == userId)
-              ListTile(
-                leading: const Icon(Icons.edit, color: Color(0xFF914b14)),
-                title: const Text('Modifier le post'),
-                onTap: () {
-                  // Logique pour modifier le post
-                },
-              ),
             if (isOwnerOrPartner)
               ListTile(
                 leading: const Icon(Icons.delete, color: Color(0xFF914b14)),
@@ -82,20 +60,14 @@ class RoleManager {
 
                   if (confirm) {
                     try {
-                      String imagePath = 'user_images/${histoires['image_url']}'; // Utilisez 'image_url' ou la clé correcte
-                      print('Tentative de suppression de l\'image à ce chemin : $imagePath');
+                      // Suppression de l'image si nécessaire (Firebase Storage)
+                      if (histoires.containsKey('image_url')) {
+                        String imagePath = 'user_images/${histoires['image_url']}';
+                        await FirebaseStorage.instance.ref(imagePath).delete();
+                      }
 
-                      // Vérifiez si l'image existe avant de la supprimer
-                      await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
-
-                      // Suppression de l'image
-                      await FirebaseStorage.instance.ref(imagePath).delete();
-
-                      // Suppression du post dans Firestore
-                      await FirebaseFirestore.instance
-                          .collection('histoires')
-                          .doc(histoires['id'])
-                          .delete();
+                      // Suppression du post dans Firestore avec l'ID du post
+                      await FirebaseFirestore.instance.collection('histoires').doc(postId).delete();
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -104,7 +76,6 @@ class RoleManager {
                         ),
                       );
                     } catch (e) {
-                      print('Erreur lors de la suppression du post ou de l\'image : $e');
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Erreur lors de la suppression : $e'),
@@ -112,8 +83,6 @@ class RoleManager {
                         ),
                       );
                     }
-
-                    Navigator.pop(context);
                   }
                 },
               ),
@@ -130,7 +99,7 @@ class RoleManager {
     );
   }
 
-  void showOptions(BuildContext context, Map<String, dynamic> histoires, String postUserId) {
-    _showPostOptions(context, histoires, postUserId);
+  void showOptions(BuildContext context, String postId, Map<String, dynamic> histoires, String postUserId) {
+    _showPostOptions(context, postId, histoires, postUserId);
   }
 }

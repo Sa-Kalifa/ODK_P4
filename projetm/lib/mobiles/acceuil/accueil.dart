@@ -65,28 +65,30 @@ class _AccueilState extends State<Accueil> {
                   ),
                 ),
               ),
-              StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('histoires')
-                    .orderBy('createdAt', descending: true)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  final posts = snapshot.data!.docs;
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: posts.length,
-                    itemBuilder: (context, index) {
-                      final post = posts[index].data() as Map<String, dynamic>;
-                      return _buildPostCard(post);
-                    },
-                  );
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('histoires')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final posts = snapshot.data!.docs;
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: posts.length,
+                itemBuilder: (context, index) {
+                  final post = posts[index].data() as Map<String, dynamic>;
+                  final postId = posts[index].id;  // Récupération de l'ID de l'histoire
+                  return _buildPostCard(post, postId);  // Passez l'ID de l'histoire au widget
                 },
-              ),
-            ],
+              );
+            },
+          ),
+
+          ],
           ),
         ),
       ),
@@ -133,7 +135,7 @@ class _AccueilState extends State<Accueil> {
     );
   }
 
-  Widget _buildPostCard(Map<String, dynamic> post) {
+  Widget _buildPostCard(Map<String, dynamic> post, String postId) {
     final bool isAnonymous = post['isAnonymous'] ?? false;
     final String userId = post['userId'] ?? 'Utilisateur inconnu';
     final String category = post['categorie'] ?? 'Sans catégorie';
@@ -161,7 +163,7 @@ class _AccueilState extends State<Accueil> {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => PostDetailPage(post: post),
+                builder: (context) => PostDetailPage(postId:postId,),
               ),
             ),
             child: Padding(
@@ -169,6 +171,7 @@ class _AccueilState extends State<Accueil> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Les autres widgets comme le CircleAvatar, le titre, la description, etc.
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -200,9 +203,8 @@ class _AccueilState extends State<Accueil> {
                           IconButton(
                             icon: const Icon(Icons.more_vert, color: Colors.grey),
                             onPressed: () {
-                              final userId = post['userId']; // L'ID de l'utilisateur qui a créé le post
-                              RoleManager().showOptions(context, post, userId);
-                            }//=> _showPostOptions(post, userId),
+                              RoleManager().showOptions(context, postId, post, userId);
+                            },
                           ),
                         ],
                       ),
@@ -211,7 +213,7 @@ class _AccueilState extends State<Accueil> {
                   const SizedBox(height: 10),
                   Text(titre, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   _buildDescription(description),
-                  const SizedBox(height: 15,),
+                  const SizedBox(height: 15),
                   if (mediaUrls.isNotEmpty) _buildImage(mediaUrls),
                   const Divider(),
                   Row(
@@ -229,7 +231,7 @@ class _AccueilState extends State<Accueil> {
                             onPressed: () {
                               setState(() {
                                 post['likes'] = likes + 1;
-                                FirebaseFirestore.instance.collection('histoires').doc(post['id']).update({'likes': likes + 1});
+                                FirebaseFirestore.instance.collection('histoires').doc(postId).update({'likes': likes + 1});
                               });
                             },
                           ),
@@ -238,7 +240,7 @@ class _AccueilState extends State<Accueil> {
                             onPressed: () {
                               setState(() {
                                 post['likes'] = likes + 1;
-                                FirebaseFirestore.instance.collection('histoires').doc(post['id']).update({'likes': likes + 1});
+                                FirebaseFirestore.instance.collection('histoires').doc(postId).update({'likes': likes + 1});
                               });
                             },
                           ),
@@ -250,7 +252,8 @@ class _AccueilState extends State<Accueil> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => PostDetailPage(post: post),
+                              builder: (context) => PostDetailPage(postId:postId,),
+                              //builder: (context) => PostDetailPage(postId: postId),
                             ),
                           );
                         },
@@ -261,7 +264,7 @@ class _AccueilState extends State<Accueil> {
                         onPressed: () {
                           setState(() {
                             post['shares'] = shares + 1;
-                            FirebaseFirestore.instance.collection('histoires').doc(post['id']).update({'shares': shares + 1});
+                            FirebaseFirestore.instance.collection('histoires').doc(postId).update({'shares': shares + 1});
                           });
                         },
                         icon: const Icon(Icons.share, color: Color(0xFF914b14)),
@@ -277,6 +280,7 @@ class _AccueilState extends State<Accueil> {
       },
     );
   }
+
 
   Widget _buildImage(List<dynamic> mediaUrls) {
     if (mediaUrls.isNotEmpty) {
@@ -309,7 +313,6 @@ class _AccueilState extends State<Accueil> {
   }
 
 
-
   Widget _buildDescription(String description) {
     const int maxChars = 100;
     if (description.length <= maxChars) {
@@ -323,146 +326,6 @@ class _AccueilState extends State<Accueil> {
       );
     }
   }
+
 }
 
-
-/*
-class RoleManager {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  // Méthode pour vérifier si l'utilisateur actuel est un partenaire
-  Future<bool> _isPartner() async {
-    final currentUser = _auth.currentUser;
-
-    if (currentUser != null) {
-      final snapshot = await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).get();
-      if (snapshot.exists) {
-        final role = snapshot['role'];
-        return role == 'Partenaire';
-      }
-    }
-
-    return false;
-  }
-
-  // Méthode pour vérifier si l'utilisateur actuel est un admin ou partenaire, ou est le propriétaire du post
-  Future<bool> _isAdminOrPartnerOrOwner(String postUserId) async {
-    final currentUser = _auth.currentUser;
-
-    if (currentUser != null) {
-      // Vérifie si l'utilisateur est le propriétaire du post
-      if (currentUser.uid == postUserId) {
-        return true;
-      }
-
-      // Récupérer le rôle de l'utilisateur dans Firestore
-      final snapshot = await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).get();
-      if (snapshot.exists) {
-        final role = snapshot['role'];
-        return role == 'Admin' || role == 'Partenaire';
-      }
-    }
-
-    return false;
-  }
-
-
-  void _showPostOptions(BuildContext context, Map<String, dynamic> post, String userId) async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-
-    // Vérifie si l'utilisateur est le propriétaire ou un partenaire/admin
-    final bool isOwnerOrPartner = currentUser?.uid == userId || await _isAdminOrPartnerOrOwner(userId);
-
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return ListView(
-          shrinkWrap: true,
-          children: [
-            if (currentUser?.uid == userId)
-              ListTile(
-                leading: const Icon(Icons.edit, color: Color(0xFF914b14)),
-                title: const Text('Modifier le post'),
-                onTap: () {
-                  // Logique pour modifier le post
-                },
-              ),
-            if (isOwnerOrPartner)
-              ListTile(
-                leading: const Icon(Icons.delete, color: Color(0xFF914b14)),
-                title: const Text('Supprimer le post'),
-                onTap: () async {
-                  // Affiche une boîte de dialogue de confirmation
-                  bool confirm = await showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Supprimer le post'),
-                      content: const Text('Êtes-vous sûr de vouloir supprimer ce post ?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(true),
-                          child: const Text('Supprimer', style: TextStyle(color: Color(0xFF914b14))),
-                        ),
-                      ],
-                    ),
-                  );
-
-                  if (confirm) {
-                    // Suppression du post dans Firestore
-                    try {
-                      // Suppression de l'image dans Firebase Storage
-                      String imagePath = 'user_images/${post['image_url']}'; // Remplacez 'image_name' par la clé appropriée dans 'post'
-                      await FirebaseStorage.instance.ref(imagePath).delete();
-
-                      // Suppression du post dans Firestore
-                      await FirebaseFirestore.instance
-                          .collection('histoires')
-                          .doc(post['id']) // Utiliser l'ID du document pour le supprimer
-                          .delete();
-
-                      // Affiche un message de confirmation
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Post et image supprimés avec succès.'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    } catch (e) {
-                      print('Erreur lors de la suppression du post ou de l\'image : $e');
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Erreur lors de la suppression : $e'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-
-                    // Ferme la boîte de dialogue et la feuille de fond
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-            ListTile(
-              leading: const Icon(Icons.flag, color: Color(0xFF914b14)),
-              title: const Text('Signaler le post'),
-              onTap: () {
-                // Logique pour signaler le post
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-
-  // Méthode qui s'assure de vérifier les rôles avant d'appeler _showPostOptions
-  void showOptions(BuildContext context, Map<String, dynamic> post, String postUserId) {
-    _showPostOptions(context, post, postUserId);
-  }
-}
-*/
