@@ -22,7 +22,7 @@ class _IntroPageState extends State<IntroPage> {
     return Scaffold(
       backgroundColor: Color(0xFFFAF3E0),
       bottomSheet: Container(
-        color: Colors.white,
+        color: Color(0xFFFAF3E0),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         child: isLastPage
             ? getStarted()
@@ -33,9 +33,10 @@ class _IntroPageState extends State<IntroPage> {
             TextButton(
               onPressed: () => pageController.jumpToPage(controller.items.length - 1),
               child: const Text(
-                  "Preseedent",
+                  "Demarer",
                 style: TextStyle(
-                  color: Colors.black
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold
                 ),
               ),
             ),
@@ -62,7 +63,8 @@ class _IntroPageState extends State<IntroPage> {
               child: const Text(
                   "Suivant",
                 style: TextStyle(
-                  color: Colors.black
+                  color: Colors.black,
+                    fontWeight: FontWeight.bold
                 ),
               ),
             ),
@@ -125,7 +127,10 @@ class _IntroPageState extends State<IntroPage> {
         },
         child: const Text(
           "Demarer",
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold
+          ),
         ),
       ),
     );

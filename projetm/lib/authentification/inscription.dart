@@ -116,17 +116,17 @@ class _SignUpPageState extends State<Inscription> {
         child: SingleChildScrollView(
           child: Column(
             children: <Widget>[
-              const SizedBox(height: 15),
+              const SizedBox(height: 30),  // Espace de 40 en haut du logo
               // Logo et titre "S'INSCRIRE"
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset('lib/assets/images/Logo01.png', height: 60), // Logo
-                  const SizedBox(width: 120),
+                  const SizedBox(width: 80),
                   const Text(
                     "S'INSCRIRE",
                     style: TextStyle(
-                      fontSize: 30,
+                      fontSize: 25,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
                     ),

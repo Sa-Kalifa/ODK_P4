@@ -1,23 +1,23 @@
 class PageItems{
   List<PageInfo> items = [
     PageInfo(
-        title: "Laboratory",
-        descriptions: "A scientist in his laboratory is not a mere technician: he is also a child confronting natural phenomena that impress him as though they were fairy tales.",
+        title: "Echange",
+        descriptions: "Un échange d’expériences n’est pas seulement une transmission de récits, c’est une invitation à explorer les mystères de notre vécu, comme un voyage au cœur de contes partagés, où chaque témoignage devient une étincelle d’émerveillement.",
         image: "lib/assets/images/intro2.png"),
 
     PageInfo(
-        title: "Diagnosis",
-        descriptions: "There is little you can do to stop a tornado, a hurricane, or a cancer diagnosis from changing your life in an instant.",
+        title: "L'entraide",
+        descriptions: "Dans les moments d'adversité, l'entraide collective devient une force indomptable, transformant chaque obstacle en un tremplin vers la résilience, où ensemble, nous trouvons la lumière même dans les ténèbres.",
         image: "lib/assets/images/intro1.png"),
 
     PageInfo(
-        title: "Chronic Diseases",
-        descriptions: "Cancer taught my family that my mom is much stronger than we ever thought.",
+        title: "Déception",
+        descriptions: "Dans le grand théâtre de la vie, la déception est souvent le drame inattendu qui nous invite à réévaluer nos désirs et à embrasser l'inattendu.",
         image: "lib/assets/images/intro4.png"),
 
     PageInfo(
-        title: "Heart Diseases",
-        descriptions: "A healthy heart is a key to happiness in life so put a stop to all of the problems related to your heart before it stops you.",
+        title: "Publie sans hésitation.",
+        descriptions: "Racontez-nous vos expériences pour que nous puissions parler de vos défis et trouver ensemble des solutions.",
         image: "lib/assets/images/intro5.png"),
 
   ];

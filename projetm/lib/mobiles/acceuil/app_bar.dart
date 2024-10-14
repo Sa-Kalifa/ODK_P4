@@ -28,10 +28,10 @@ class _CustomBottomAppBarState extends State<CustomBottomAppBar> {
       buttonBackgroundColor: Color(0xFF914b14), // Couleur du bouton sélectionné
       animationDuration: Duration(milliseconds: 300), // Animation plus fluide
       items: <Widget>[
-        Icon(Icons.home, size: 30, color: _selectedIndex == 0 ? Color(0xFFFAF3E0) : Colors.white),
-        Icon(Icons.add_circle_sharp, size: 30, color: _selectedIndex == 1 ? Color(0xFFFAF3E0) : Colors.white),
-        Icon(Icons.chat, size: 30, color: _selectedIndex == 2 ? Color(0xFFFAF3E0) : Colors.white),
-        Icon(Icons.person, size: 30, color: _selectedIndex == 3 ? Color(0xFFFAF3E0) : Colors.white),
+        Icon(Icons.home, size: 35, color: _selectedIndex == 0 ? Color(0xFFFAF3E0) : Colors.white),
+        Icon(Icons.add_circle_sharp, size: 35, color: _selectedIndex == 1 ? Color(0xFFFAF3E0) : Colors.white),
+        Icon(Icons.chat, size: 35, color: _selectedIndex == 2 ? Color(0xFFFAF3E0) : Colors.white),
+        Icon(Icons.person, size: 35, color: _selectedIndex == 3 ? Color(0xFFFAF3E0) : Colors.white),
       ],
       onTap: (index) {
         setState(() {

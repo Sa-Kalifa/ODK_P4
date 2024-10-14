@@ -5,6 +5,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:projetm/mobiles/profile/aide.dart';
+import 'package:projetm/mobiles/profile/apropos.dart';
+import 'package:projetm/mobiles/profile/mes_publications.dart';
 import '../acceuil/app_bar.dart';
 import 'edit_profile_page.dart';
 
@@ -144,7 +146,7 @@ class _ProfileState extends State<Profile> {
       appBar: AppBar(
         title: const Text(
             'Profile',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30, color: Colors.black)),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30, color: Color(0xFF914b14))),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -207,20 +209,20 @@ class _ProfileState extends State<Profile> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => EditProfilePage()),
+                  MaterialPageRoute(builder: (context) => MesPublications()),
                 );
               },
             ),
             ListTile(
               leading: const Icon(Icons.quiz_outlined, color: Color(0xFF914b14)),
               title: const Text(
-                'Aide',
+                'A propos',
                 style: TextStyle(color: Colors.black),
               ),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Aide()),
+                  MaterialPageRoute(builder: (context) => Apropos()),
                 );
               },
             ),

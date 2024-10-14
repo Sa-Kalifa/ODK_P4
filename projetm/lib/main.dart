@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:projetm/poste.dart';
+import 'package:projetm/mobiles/introduction/intro_page.dart';
 import 'authentification/inscription.dart';
 import 'firebase_options.dart';
 
@@ -8,7 +8,6 @@ import 'package:projetm/mobiles/acceuil/accueil.dart';
 import 'package:projetm/mobiles/acceuil/histoire.dart';
 import 'package:projetm/mobiles/notification/notification.dart';
 import 'authentification/login_page.dart';
-import 'mobiles/introduction/intro_page.dart';
 import 'mobiles/profile/profile.dart';
 
 
@@ -39,14 +38,7 @@ class MyApp extends StatelessWidget {
       // routerConfig: routerConfig,
       routes: {
         // Routes pour la navigation
-        /*
-          '/dashboard': (context) => MainScreen(),
-          '/utilisateur': (context) => UserPage(),
-          '/publication': (context) => PublicationPage(),
-          '/signale': (context) => SignalePage(),
-          '/profile_admin': (context) => ProfilePage(),
-          '/messager': (context) => MessagePage(),
-*/
+
         '/login': (context) => LoginPage(),
         '/accueil': (context) => Accueil(),
         '/profile': (context) => Profile(),
@@ -55,7 +47,7 @@ class MyApp extends StatelessWidget {
         '/histoire': (context) => Histoire(),
       },
       // Définissez la page d'accueil ou la page par défaut de votre application
-      home: Accueil(),
+      home: IntroPage(),
     );
   }
 }

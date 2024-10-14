@@ -90,132 +90,137 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       backgroundColor: Color(0xFFFAF3E0),
       body: SafeArea(
-        child: Center(
-          child: Form(
-            key: formkey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset('lib/assets/images/Logo01.png', height: 80),
-                const SizedBox(height: 25),
-                const Text(
-                  'Se Connecter',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 50),
-
-// ************************ Les Inputs ************************************
-
-          // Champ de saisie pour l'Email
-                TextFormField(
-                  controller: emailcontroller,
-                  style: const TextStyle(color: Colors.black), // Texte en noir
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: Icon(Icons.email, color: Colors.black), // Icône pour l'email
-                    labelStyle: TextStyle(color: Colors.black), // Style de texte pour l'étiquette
-                    border: OutlineInputBorder(), // Bordure pour le champ
-                  ),
-                  keyboardType: TextInputType.emailAddress, // Type de saisie pour l'email
-                  validator: (value) {
-                    if (value == null || !value.contains('@')) {
-                      return 'Veuillez entrer un email valide';
-                    }
-                    return null;
-                  },
-
-                ),
-                const SizedBox(height: 20), // Espacement entre les champs
-
-            // Champ de saisie pour le mot de passe
-                TextFormField(
-                  controller: passwordcontroller,
-                  style: const TextStyle(color: Colors.black), // Texte en noir
-                  decoration: InputDecoration(
-                    labelText: 'Mot de passe',
-                    prefixIcon: const Icon(Icons.lock, color: Colors.black), // Icône pour le mot de passe
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility : Icons.visibility_off, // Icône pour afficher/masquer
-                        color: Colors.black,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword; // Permet de masquer ou afficher le mot de passe
-                        });
-                      },
-                    ),
-                    labelStyle: const TextStyle(color: Colors.black), // Style de l'étiquette
-                    border: const OutlineInputBorder(), // Bordure pour le champ
-                  ),
-                  obscureText: _obscurePassword, // Gérer l'affichage du texte
-                  validator: (value) {
-                    if (value == null || value.length < 6) {
-                      return 'Le mot de passe doit contenir au moins 6 caractères';
-                    }
-                    return null;
-                  },
-
-                ),
-
-                const SizedBox(height: 10),
-
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 25.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        'Mot de passe Oublié',
-                        style: TextStyle(
-                          color: Color(0xFF914b14),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 50),
-                MyBouton(
-                  onTap: () {
-                    if (formkey.currentState!.validate()) {
-                      signUserIn(context);
-                    }
-                  },
-                ),
-                const SizedBox(height: 50),
-                Row(
+        child: SingleChildScrollView(  // Rend le contenu défilable
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),  // Ajout de padding général
+            child: Center(
+              child: Form(
+                key: formkey,
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    const SizedBox(height: 40),  // Espace de 40 en haut du logo
+                    Image.asset('lib/assets/images/Logo01.png', height: 80),
+                    const SizedBox(height: 25),
                     const Text(
-                      "Vous n’avez pas de compte ?,",
-                      style: TextStyle(color: Colors.black),
-                    ),
-                    const SizedBox(width: 4),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/inscription');
-                      },
-                      child: const Text(
-                        "S’inscrire",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF914b14), // Couleur du lien
-                        ),
+                      'Se Connecter',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
                       ),
+                    ),
+                    const SizedBox(height: 50),
+
+                    // ************************ Les Inputs ************************************
+
+                    // Champ de saisie pour l'Email
+                    TextFormField(
+                      controller: emailcontroller,
+                      style: const TextStyle(color: Colors.black), // Texte en noir
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        prefixIcon: Icon(Icons.email, color: Colors.black), // Icône pour l'email
+                        labelStyle: TextStyle(color: Colors.black), // Style de texte pour l'étiquette
+                        border: OutlineInputBorder(), // Bordure pour le champ
+                      ),
+                      keyboardType: TextInputType.emailAddress, // Type de saisie pour l'email
+                      validator: (value) {
+                        if (value == null || !value.contains('@')) {
+                          return 'Veuillez entrer un email valide';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20), // Espacement entre les champs
+
+                    // Champ de saisie pour le mot de passe
+                    TextFormField(
+                      controller: passwordcontroller,
+                      style: const TextStyle(color: Colors.black), // Texte en noir
+                      decoration: InputDecoration(
+                        labelText: 'Mot de passe',
+                        prefixIcon: const Icon(Icons.lock, color: Colors.black), // Icône pour le mot de passe
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility : Icons.visibility_off, // Icône pour afficher/masquer
+                            color: Colors.black,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword; // Permet de masquer ou afficher le mot de passe
+                            });
+                          },
+                        ),
+                        labelStyle: const TextStyle(color: Colors.black), // Style de l'étiquette
+                        border: const OutlineInputBorder(), // Bordure pour le champ
+                      ),
+                      obscureText: _obscurePassword, // Gérer l'affichage du texte
+                      validator: (value) {
+                        if (value == null || value.length < 6) {
+                          return 'Le mot de passe doit contenir au moins 6 caractères';
+                        }
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 25.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Mot de passe Oublié',
+                            style: TextStyle(
+                              color: Color(0xFF914b14),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 50),
+                    MyBouton(
+                      onTap: () {
+                        if (formkey.currentState!.validate()) {
+                          signUserIn(context);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 50),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "Vous n’avez pas de compte ?,",
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        const SizedBox(width: 4),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(context, '/inscription');
+                          },
+                          child: const Text(
+                            "S’inscrire",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF914b14), // Couleur du lien
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+
 }
 
 // ******************** La gestion de Role **********************************
