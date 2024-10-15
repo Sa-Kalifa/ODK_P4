@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:dashboard/pages/dashboard_page.dart';
 import 'package:dashboard/pages/login.dart';
 import 'package:dashboard/pages/messager.dart';
@@ -5,7 +6,7 @@ import 'package:dashboard/pages/profile.dart';
 import 'package:dashboard/pages/publication.dart';
 import 'package:dashboard/pages/signale.dart';
 import 'package:dashboard/pages/utilisateur.dart';
-import 'package:flutter/material.dart';
+import 'package:dashboard/parametre/couleur.dart'; // Assure-toi que cette classe est définie correctement
 
 class Dashboard extends StatefulWidget {
   @override
@@ -15,7 +16,7 @@ class Dashboard extends StatefulWidget {
 class _DashboardState extends State<Dashboard> {
   int _selectedIndex = 0;
 
-  // List of pages to show in IndexedStack
+  // Liste des pages à afficher dans l'IndexedStack
   final List<Widget> _pages = [
     DashboardPage(),
     Utilisateur(),
@@ -26,7 +27,7 @@ class _DashboardState extends State<Dashboard> {
     Login(),
   ];
 
-  // Menu items data
+  // Données des items du menu
   final List<Map<String, dynamic>> _menuItems = [
     {'icon': Icons.dashboard, 'title': 'Dashboard'},
     {'icon': Icons.people, 'title': 'Utilisateur'},
@@ -46,27 +47,23 @@ class _DashboardState extends State<Dashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Admin Dashboard'),
-        backgroundColor: ,
-      ),
       body: Row(
         children: [
-          // Sidebar Menu
+          // Menu latéral
           Expanded(
             flex: 1,
             child: Container(
-              color: Colors.grey[200],
+              color: Couleur.nav, // Couleur de fond du menu
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  Container(
+                  SizedBox(
                     height: 100,
                     child: Center(
-                      child: FlutterLogo(size: 60),
+                      child: Image.asset('lib/assets/images/Logo01.png', height: 60),
                     ),
                   ),
-                  // Dynamically create menu items
+                  // Création dynamique des items du menu
                   ..._menuItems.asMap().entries.map((entry) {
                     int idx = entry.key;
                     Map<String, dynamic> menuItem = entry.value;
@@ -76,7 +73,7 @@ class _DashboardState extends State<Dashboard> {
               ),
             ),
           ),
-          // Content area with IndexedStack
+          // Zone de contenu avec IndexedStack
           Expanded(
             flex: 4,
             child: IndexedStack(
@@ -89,15 +86,27 @@ class _DashboardState extends State<Dashboard> {
     );
   }
 
-  // Build each Menu Item
+  // Construire chaque item du menu
   Widget buildMenuItem(BuildContext context, IconData icon, String title, int index) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      selected: _selectedIndex == index,
-      onTap: () {
-        _onMenuItemTap(index);
-      },
+    final bool isSelected = _selectedIndex == index; // Vérifie si l'item est sélectionné
+
+    return Container(
+      //color: isSelected ? const Color(0xFF914b14).withOpacity(0.2) : Colors.transparent, // Couleur de fond si sélectionné
+    child: ListTile(
+        leading: Icon(
+          icon,
+          color: isSelected ? Couleur.pr : Couleur.sec, // Couleur de l'icône
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? Couleur.pr : Couleur.blanc, // Couleur du texte
+          ),
+        ),
+        onTap: () {
+          _onMenuItemTap(index);
+        },
+      ),
     );
   }
 }
