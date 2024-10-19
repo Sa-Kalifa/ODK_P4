@@ -40,10 +40,12 @@ class _UtilisateurState extends State<Utilisateur> {
     }).toList();
   }
 
+
   // Fonction pour enregistrer l'utilisateur dans Firebase Authentication
   Future<void> _registerUserInAuth(String email, String password) async {
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: email, password: password);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erreur Firebase Auth: $e')),
@@ -51,7 +53,6 @@ class _UtilisateurState extends State<Utilisateur> {
     }
   }
 
-  // Fonction pour ajouter ou modifier un utilisateur dans Firestore
   Future<void> _saveUser({String? userId}) async {
     if (_nameController.text.isEmpty || _emailController.text.isEmpty || _phoneController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -77,17 +78,25 @@ class _UtilisateurState extends State<Utilisateur> {
           const SnackBar(content: Text('Utilisateur modifié avec succès!')),
         );
       } else {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        // Création de l'utilisateur dans Firebase Auth et Firestore
+        UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: _emailController.text,
           password: _passwordController.text,
         );
-        await FirebaseFirestore.instance.collection('users').add({
+
+        // Ajouter l'utilisateur à Firestore
+        await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
           'nom': _nameController.text,
           'email': _emailController.text,
           'tel': _phoneController.text,
           'role': _role,
           'isBlocked': false,
+          'createdAt': FieldValue.serverTimestamp(), // Pour suivre la date d'ajout
         });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Utilisateur ajouté avec succès!')),
+        );
       }
 
       _nameController.clear();
@@ -109,6 +118,8 @@ class _UtilisateurState extends State<Utilisateur> {
       );
     }
   }
+
+
   // Fonction pour supprimer un utilisateur
   Future<void> _deleteUser(String userId) async {
     await FirebaseFirestore.instance.collection('users').doc(userId).delete();
@@ -118,15 +129,19 @@ class _UtilisateurState extends State<Utilisateur> {
     setState(() {});
   }
 
+
   // Popup de confirmation de suppression
   void _showDeleteConfirmation(String userId, String role) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          title: Text('Confirmer la suppression', style: TextStyle(color: Colors.red[800])),
-          content: const Text('Êtes-vous sûr de vouloir supprimer cet utilisateur ?'),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12)),
+          title: Text('Confirmer la suppression',
+              style: TextStyle(color: Colors.red[800])),
+          content: const Text(
+              'Êtes-vous sûr de vouloir supprimer cet utilisateur ?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -162,8 +177,10 @@ class _UtilisateurState extends State<Utilisateur> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              title: Text('Attention : Suppression d\'un Admin', style: TextStyle(color: Colors.orange[800])),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              title: Text('Attention : Suppression d\'un Admin',
+                  style: TextStyle(color: Colors.orange[800])),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -172,7 +189,8 @@ class _UtilisateurState extends State<Utilisateur> {
                         'Cochez la case ci-dessous pour confirmer que vous assumez cette responsabilité.',
                   ),
                   CheckboxListTile(
-                    title: const Text('Je comprends et assume la responsabilité.'),
+                    title: const Text(
+                        'Je comprends et assume la responsabilité.'),
                     value: _confirmResponsibility,
                     onChanged: (value) {
                       setState(() {
@@ -189,7 +207,9 @@ class _UtilisateurState extends State<Utilisateur> {
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _confirmResponsibility ? Colors.red[800] : Colors.grey,
+                    backgroundColor: _confirmResponsibility
+                        ? Colors.red[800]
+                        : Colors.grey,
                   ),
                   onPressed: _confirmResponsibility
                       ? () {
@@ -207,7 +227,7 @@ class _UtilisateurState extends State<Utilisateur> {
     );
   }
 
-  // Pop-up pour ajouter ou modifier un utilisateur
+  // Popup de création ou modification d'utilisateur avec liste de rôle sélective
   void _showUserDialog({String? userId, Map<String, dynamic>? userData}) {
     if (userData != null) {
       _nameController.text = userData['nom'];
@@ -220,7 +240,7 @@ class _UtilisateurState extends State<Utilisateur> {
       _emailController.clear();
       _passwordController.clear();
       _phoneController.clear();
-      _role = 'Membre';
+      _role = ''; // Par défaut, aucun rôle sélectionné
       _imageUrl = null;
     }
 
@@ -228,48 +248,90 @@ class _UtilisateurState extends State<Utilisateur> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(userData == null ? 'Ajouter un utilisateur' : 'Modifier un utilisateur'),
+          title: Text(userData == null
+              ? 'Ajouter un utilisateur'
+              : 'Modifier un utilisateur'),
           content: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextField(
-                  controller: _nameController,
-                  decoration: InputDecoration(labelText: 'Nom'),
-                ),
-                TextField(
-                  controller: _emailController,
-                  decoration: InputDecoration(labelText: 'Email'),
-                ),
-                if (userData == null) // Champ mot de passe uniquement pour l'ajout
-                  TextField(
-                    controller: _passwordController,
-                    decoration: InputDecoration(labelText: 'Mot de passe'),
-                    obscureText: true,
+            child: Form(
+              //key: _formKey, // Ajout d'une clé pour la validation du formulaire
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(labelText: 'Nom'),
+                    validator: (value) =>
+                    value == null || value.isEmpty
+                        ? 'Veuillez entrer un nom'
+                        : null,
                   ),
-                TextField(
-                  controller: _phoneController,
-                  decoration: InputDecoration(labelText: 'Téléphone'),
-                ),
-                DropdownButton<String>(
-                  value: _role,
-                  items: ['Admin', 'Partenaire', 'Membre'].map((role) {
-                    return DropdownMenuItem<String>(
-                      value: role,
-                      child: Text(role),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _role = value!;
-                    });
-                  },
-                ),
-                if (_imageUrl != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: Image.network(_imageUrl!, height: 100),
+                  TextFormField(
+                    controller: _emailController,
+                    decoration: InputDecoration(labelText: 'Email'),
+                    validator: (value) =>
+                    value == null || !value.contains('@')
+                        ? 'Veuillez entrer un email valide'
+                        : null,
                   ),
-              ],
+                  if (userData ==
+                      null) // Champ mot de passe uniquement pour l'ajout
+                    TextFormField(
+                      controller: _passwordController,
+                      decoration: InputDecoration(labelText: 'Mot de passe'),
+                      obscureText: true,
+                      validator: (value) =>
+                      value == null || value.length < 6
+                          ? 'Le mot de passe doit contenir au moins 6 caractères'
+                          : null,
+                    ),
+                  TextFormField(
+                    controller: _phoneController,
+                    decoration: InputDecoration(labelText: 'Téléphone'),
+                    validator: (value) =>
+                    value == null || value.isEmpty
+                        ? 'Veuillez entrer un numéro de téléphone'
+                        : null,
+                  ),
+                  const SizedBox(height: 10),
+
+                  // DropdownButtonFormField pour choisir un rôle avec validation
+                  DropdownButtonFormField<String>(
+                    value: _role.isEmpty ? null : _role,
+                    // Valeur par défaut à null pour afficher le placeholder
+                    decoration: InputDecoration(
+                      labelText: 'Rôle',
+                      border: OutlineInputBorder(),
+                      filled: true,
+                      fillColor: Colors.grey.shade200,
+                    ),
+                    hint: const Text('Sélectionnez un rôle'),
+                    // Placeholder si aucun rôle sélectionné
+                    validator: (value) =>
+                    value == null
+                        ? 'Veuillez sélectionner un rôle'
+                        : null,
+                    // Validation
+                    items: ['Admin', 'Partenaire', 'Membre'].map((role) {
+                      return DropdownMenuItem<String>(
+                        value: role,
+                        child: Text(role),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _role = value!;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Affichage de l'image (si disponible)
+                  if (_imageUrl != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Image.network(_imageUrl!, height: 100),
+                    ),
+                ],
+              ),
             ),
           ),
           actions: [
@@ -279,15 +341,15 @@ class _UtilisateurState extends State<Utilisateur> {
             ),
             ElevatedButton(
               onPressed: _isLoading ? null : () => _saveUser(userId: userId),
-              child: _isLoading
-                  ? const CircularProgressIndicator()
-                  : Text(userData == null ? 'Ajouter' : 'Modifier'),
+              child: _isLoading ? const CircularProgressIndicator() : Text(
+                  userData == null ? 'Ajouter' : 'Modifier'),
             ),
           ],
         );
       },
     );
   }
+
 
   // Fonction pour bloquer ou débloquer un utilisateur
   Future<void> _toggleBlockUser(String userId, bool isBlocked) async {
@@ -335,7 +397,8 @@ class _UtilisateurState extends State<Utilisateur> {
                     title: const Text('Filtrer par rôle'),
                     content: DropdownButton<String>(
                       value: _filterRole,
-                      items: ['Tous', 'Admin', 'Partenaire', 'Membre'].map((role) {
+                      items: ['Tous', 'Admin', 'Partenaire', 'Membre'].map((
+                          role) {
                         return DropdownMenuItem<String>(
                           value: role,
                           child: Text(role),
@@ -344,7 +407,8 @@ class _UtilisateurState extends State<Utilisateur> {
                       onChanged: (value) {
                         setState(() {
                           _filterRole = value!;
-                          Navigator.pop(context); // Ferme le popup après sélection
+                          Navigator.pop(
+                              context); // Ferme le popup après sélection
                         });
                       },
                     ),
@@ -385,121 +449,55 @@ class _UtilisateurState extends State<Utilisateur> {
           }
 
           return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
+            scrollDirection: Axis.vertical, // Active le défilement vertical
             child: Column(
               children: [
                 const SizedBox(height: 40),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Card(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                      elevation: 5,
-                      color: Couleur.pr,
-                      child: SizedBox(
-                        width: 200,
-                        height: 100,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.person, size: 40, color: Couleur.blanc,),
-                            const Text('Partenaires',style: TextStyle(
-                                color: Couleur.blanc
-                            ),),
-                            FutureBuilder<int>(
-                              future: _countUsersByRole('Partenaire'),
-                              builder: (context, snapshot) {
-                                return Text(snapshot.hasData ? snapshot.data!.toString() : '0', style: const TextStyle(
-                                    color: Couleur.blanc,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold
-                                ),);
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    _buildRoleCard(
+                        'Partenaire', 'person', 'Partenaire', Couleur.pr),
                     const SizedBox(width: 40),
-                    Card(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                      color: Couleur.nav,
-                      elevation: 5,
-                      child: SizedBox(
-                        width: 200,
-                        height: 100,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.person, size: 40, color: Couleur.blanc,),
-                            const Text('Membres',style: TextStyle(
-                                color: Couleur.blanc
-                            ),),
-                            FutureBuilder<int>(
-                              future: _countUsersByRole('Membre'),
-                              builder: (context, snapshot) {
-                                return Text(snapshot.hasData ? snapshot.data!.toString() : '0',style: const TextStyle(
-                                    color: Couleur.blanc,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold
-                                ),);
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    _buildRoleCard('Membre', 'person', 'Membre', Couleur.nav),
                     const SizedBox(width: 40),
-                    Card(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                      color: Couleur.sec,
-                      elevation: 5,
-                      child: SizedBox(
-                        width: 200,
-                        height: 100,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.admin_panel_settings, size: 40, color: Couleur.blanc),
-                            const Text('Admins', style: TextStyle(
-                              color: Couleur.blanc
-                            ),),
-                            FutureBuilder<int>(
-                              future: _countUsersByRole('Admin'),
-                              builder: (context, snapshot) {
-                                return Text(snapshot.hasData ? snapshot.data!.toString() : '0',style: const TextStyle(
-                                    color: Couleur.blanc,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold
-                                ),);
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    _buildRoleCard(
+                        'Admin', 'admin_panel_settings', 'Admin', Couleur.sec),
                   ],
                 ),
                 const SizedBox(height: 50),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    DataTable(
+
+                // Scrollable DataTable
+                SizedBox(
+                  height: 400, // Hauteur maximale pour le tableau
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    // Active le défilement vertical
+                    child: DataTable(
                       columns: const [
-                        DataColumn(label: Text('ID', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
-                        DataColumn(label: Text('Image', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
-                        DataColumn(label: Text('Nom', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
-                        DataColumn(label: Text('Email', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
-                        DataColumn(label: Text('Téléphone', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
-                        DataColumn(label: Text('Rôle', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
-                        DataColumn(label: Text('Action', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
+                        DataColumn(label: Text('ID', style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 18))),
+                        DataColumn(label: Text('Image', style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 18))),
+                        DataColumn(label: Text('Nom', style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 18))),
+                        DataColumn(label: Text('Email', style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 18))),
+                        DataColumn(label: Text('Téléphone', style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 18))),
+                        DataColumn(label: Text('Rôle', style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 18))),
+                        DataColumn(label: Text('Action', style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 18))),
                       ],
                       rows: users.map((user) {
                         bool isBlocked = user['isBlocked'] ?? false;
                         return DataRow(cells: [
-                          DataCell(Text((users.indexOf(user) + 1).toString())), // Colonne ID
+                          DataCell(Text((users.indexOf(user) + 1).toString())),
+                          // Colonne ID
                           DataCell(CircleAvatar(
-                            backgroundImage: NetworkImage(user['image_url'] ?? ''),
+                            backgroundImage: NetworkImage(
+                                user['image_url'] ?? ''),
                           )),
                           DataCell(Text(user['nom'] ?? '')),
                           DataCell(Text(user['email'] ?? '')),
@@ -508,13 +506,17 @@ class _UtilisateurState extends State<Utilisateur> {
                           DataCell(Row(
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.blue),
-                                onPressed: () => _showUserDialog(userId: user['id'], userData: user),
+                                icon: const Icon(
+                                    Icons.edit, color: Colors.blue),
+                                onPressed: () => _showUserDialog(
+                                    userId: user['id'], userData: user),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
+                                icon: const Icon(
+                                    Icons.delete, color: Colors.red),
                                 onPressed: () async {
-                                  await FirebaseFirestore.instance.collection('users').doc(user['id']).delete();
+                                  await FirebaseFirestore.instance.collection(
+                                      'users').doc(user['id']).delete();
                                   setState(() {});
                                 },
                               ),
@@ -523,22 +525,54 @@ class _UtilisateurState extends State<Utilisateur> {
                                   isBlocked ? Icons.lock : Icons.lock_open,
                                   color: isBlocked ? Colors.red : Colors.green,
                                 ),
-                                onPressed: () => _toggleBlockUser(user['id'], isBlocked),
+                                onPressed: () =>
+                                    _toggleBlockUser(user['id'], isBlocked),
                               ),
                             ],
                           )),
                         ]);
                       }).toList(),
                     ),
-                  ],
+                  ),
                 ),
-
               ],
             ),
           );
         },
       ),
+    );
+  }
 
+// Widget pour construire les cartes de rôle
+  Widget _buildRoleCard(String role, String icon, String roleType,
+      Color color) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 5,
+      color: color,
+      child: SizedBox(
+        width: 200,
+        height: 100,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.person, size: 40, color: Couleur.blanc),
+            Text(roleType, style: const TextStyle(color: Couleur.blanc)),
+            FutureBuilder<int>(
+              future: _countUsersByRole(role),
+              builder: (context, snapshot) {
+                return Text(snapshot.hasData ? snapshot.data!.toString() : '0',
+                  style: const TextStyle(
+                    color: Couleur.blanc,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

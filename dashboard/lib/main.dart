@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-import 'package:dashboard/pages/login.dart';
+import 'package:dashboard/authentification/login.dart';
 import 'package:dashboard/pages/messager.dart';
 import 'package:dashboard/pages/profile.dart';
 import 'package:dashboard/pages/publication.dart';
 import 'package:dashboard/pages/signale.dart';
 import 'package:dashboard/pages/utilisateur.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:go_router/go_router.dart';
+//import 'package:go_router/go_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,13 +21,12 @@ void main() async {
 
   runApp(const MyApp());
 }
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
+    return MaterialApp(
       title: 'Maaya',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -35,16 +34,36 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.light,
         primaryColor: const Color(0xFF914B14), // Couleur principale de l'application
       ),
+      // routerConfig: routerConfig,
+      routes: {
+        // Routes pour la navigation
+
+        '/login': (context) => Login(),
+        '/dashboard': (context) => Dashboard(),
+        '/profile': (context) => Profile(),
+        '/publication': (context) => Publication(),
+        '/utilisateur': (context) => Utilisateur(),
+        '/messager': (context) => Messager(),
+        '/signale': (context) => Signale(),
+      },
+      // Définissez la page d'accueil ou la page par défaut de votre application
+      home: Login(),
       // Utilisation de GoRouter pour la gestion des routes
-      routerConfig: _router,
+      //routerConfig: _router,
     );
   }
 }
 
-// Routeur défini de manière globale
+
+/*// Routeur défini de manière globale
 final GoRouter _router = GoRouter(
-  initialLocation: '/dashboard',
+  initialLocation: '/login',
   routes: [
+    GoRoute(
+      path: '/login',
+      name: 'login',
+      builder: (context, state) => const Login(),
+    ),
     GoRoute(
       path: '/',
       redirect: (context, state) => FirebaseAuth.instance.currentUser == null ? '/login' : '/dashboard',
@@ -57,17 +76,17 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/utilisateur',
       name: 'utilisateur',
-      builder: (context, state) => Utilisateur(),
+      builder: (context, state) => const Utilisateur(),
     ),
     GoRoute(
       path: '/publication',
       name: 'publication',
-      builder: (context, state) => Publication(),
+      builder: (context, state) => const Publication(),
     ),
     GoRoute(
       path: '/signale',
       name: 'signale',
-      builder: (context, state) => Signale(),
+      builder: (context, state) => const Signale(),
     ),
     GoRoute(
       path: '/profile',
@@ -79,11 +98,6 @@ final GoRouter _router = GoRouter(
       name: 'messager',
       builder: (context, state) => const Messager(),
     ),
-    GoRoute(
-      path: '/login',
-      name: 'login',
-      builder: (context, state) => const Login(),
-    ),
   ],
   // Gestion des erreurs de navigation (page introuvable)
   errorBuilder: (context, state) => const Scaffold(
@@ -92,3 +106,4 @@ final GoRouter _router = GoRouter(
     ),
   ),
 );
+*/

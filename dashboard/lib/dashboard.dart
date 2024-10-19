@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:dashboard/pages/dashboard_page.dart';
-import 'package:dashboard/pages/login.dart';
 import 'package:dashboard/pages/messager.dart';
 import 'package:dashboard/pages/profile.dart';
 import 'package:dashboard/pages/publication.dart';
@@ -19,12 +18,11 @@ class _DashboardState extends State<Dashboard> {
   // Liste des pages à afficher dans l'IndexedStack
   final List<Widget> _pages = [
     DashboardPage(),
-    Utilisateur(),
-    Publication(),
-    Signale(),
-    Profile(),
-    Messager(),
-    Login(),
+    const Utilisateur(),
+    const Publication(),
+    const Signale(),
+    const Profile(),
+    const Messager(),
   ];
 
   // Données des items du menu
@@ -35,7 +33,6 @@ class _DashboardState extends State<Dashboard> {
     {'icon': Icons.warning, 'title': 'Signale'},
     {'icon': Icons.account_circle, 'title': 'Profile'},
     {'icon': Icons.message, 'title': 'Messager'},
-    {'icon': Icons.logout, 'title': 'Se Deconnecter'},
   ];
 
   void _onMenuItemTap(int index) {

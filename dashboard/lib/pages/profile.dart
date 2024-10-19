@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dashboard/authentification/login.dart';
 import 'package:dashboard/parametre/couleur.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -49,7 +50,7 @@ class _ProfileState extends State<Profile> {
       setState(() {
         _nameController.text = userData['nom'];
         _emailController.text = userData['email'];
-        _phoneController.text = userData['telephone'];
+        _phoneController.text = userData['tel'];
         userRole = userData['role'];
       });
     }
@@ -60,14 +61,23 @@ class _ProfileState extends State<Profile> {
       await _firestore.collection('users').doc(user!.uid).update({
         'nom': _nameController.text,
         'email': _emailController.text,
-        'telephone': _phoneController.text,
+        'tel': _phoneController.text,
       });
     }
   }
 
+  // Fonction pour déconnecter l'utilisateur et revenir à la page de connexion
   void _logout() async {
-    await _auth.signOut();
-    Navigator.of(context).pushReplacementNamed('/login');
+    // Log pour vérifier si la fonction est appelée
+    print("Se déconnecter cliqué");
+
+    // Assure-toi que la page de login est correcte
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Login(), // Remplace par ta page de login
+      ),
+    );
   }
 
   @override
