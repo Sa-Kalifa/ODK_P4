@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dashboard/parametre/couleur.dart'; // Tes couleurs personnalisées
@@ -21,7 +22,7 @@ class _UtilisateurState extends State<Utilisateur> {
   bool _isLoading = false;
   String? _imageUrl; // Pour afficher l'image
 
-  // Fonction pour compter les utilisateurs par rôle
+// Fonction pour compter les utilisateurs par rôle
   Future<int> _countUsersByRole(String role) async {
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection('users')
@@ -35,24 +36,12 @@ class _UtilisateurState extends State<Utilisateur> {
     QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('users').get();
     return snapshot.docs.map((doc) {
       Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-      data['id'] = doc.id; // Ajoute l'ID pour pouvoir le manipuler
+      data['id'] = doc.id; // Ajoute l'ID pour pouvoir manipuler
       return data;
     }).toList();
   }
 
-
-  // Fonction pour enregistrer l'utilisateur dans Firebase Authentication
-  Future<void> _registerUserInAuth(String email, String password) async {
-    try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: email, password: password);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur Firebase Auth: $e')),
-      );
-    }
-  }
-
+  // Fonction pour ajouter ou modifier un utilisateur
   Future<void> _saveUser({String? userId}) async {
     if (_nameController.text.isEmpty || _emailController.text.isEmpty || _phoneController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -67,7 +56,7 @@ class _UtilisateurState extends State<Utilisateur> {
 
     try {
       if (userId != null) {
-        // Mise à jour de l'utilisateur existant dans Firestore
+        // Mise à jour d'un utilisateur existant
         await FirebaseFirestore.instance.collection('users').doc(userId).update({
           'nom': _nameController.text,
           'email': _emailController.text,
@@ -84,16 +73,15 @@ class _UtilisateurState extends State<Utilisateur> {
           password: _passwordController.text,
         );
 
-        // Ajouter l'utilisateur à Firestore
+        // Ajout à Firestore
         await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
           'nom': _nameController.text,
           'email': _emailController.text,
           'tel': _phoneController.text,
           'role': _role,
           'isBlocked': false,
-          'createdAt': FieldValue.serverTimestamp(), // Pour suivre la date d'ajout
+          'createdAt': FieldValue.serverTimestamp(),
         });
-
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Utilisateur ajouté avec succès!')),
         );
@@ -119,29 +107,70 @@ class _UtilisateurState extends State<Utilisateur> {
     }
   }
 
-
-  // Fonction pour supprimer un utilisateur
-  Future<void> _deleteUser(String userId) async {
-    await FirebaseFirestore.instance.collection('users').doc(userId).delete();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Utilisateur supprimé avec succès!')),
-    );
-    setState(() {});
+  // Fonction pour supprimer un utilisateur et toutes ses données
+  Future<void> _deleteUser(String userId, String email) async {
+    try {
+      // Supprime le document utilisateur depuis Firestore
+      await FirebaseFirestore.instance.collection('users').doc(userId).delete();
+      print('Utilisateur supprimé : $email');
+    } catch (e) {
+      print("Erreur lors de la suppression de l'utilisateur : $e");
+    }
   }
 
 
-  // Popup de confirmation de suppression
-  void _showDeleteConfirmation(String userId, String role) {
+  // Fonction pour supprimer les histoires de l'utilisateur
+  Future<void> _deleteUserStories(String userId) async {
+    QuerySnapshot storiesSnapshot = await FirebaseFirestore.instance
+        .collection('histoires')
+        .where('userId', isEqualTo: userId)
+        .get();
+
+    for (var storyDoc in storiesSnapshot.docs) {
+      String storyId = storyDoc.id;
+
+      // Supprimer les fichiers dans Firebase Storage associés à cette histoire
+      List mediaUrls = storyDoc['mediaUrls'];
+      for (String mediaUrl in mediaUrls) {
+        await FirebaseStorage.instance.refFromURL(mediaUrl).delete();
+      }
+
+      // Supprimer l'histoire de Firestore
+      await FirebaseFirestore.instance.collection('histoires').doc(storyId).delete();
+    }
+  }
+
+  // Fonction pour supprimer l'utilisateur de Firebase Auth
+  Future<void> _deleteUserAuth(String email, String password) async {
+    try {
+      User? currentUser = FirebaseAuth.instance.currentUser;
+
+      // Re-authentifier l'utilisateur pour le supprimer
+      AuthCredential credential = EmailAuthProvider.credential(email: email, password: password);
+      await currentUser!.reauthenticateWithCredential(credential);
+
+      // Supprimer l'utilisateur
+      await currentUser.delete();
+    } catch (e) {
+      throw 'Erreur lors de la suppression de l\'utilisateur Auth : $e';
+    }
+  }
+
+// Popup de confirmation de suppression
+  void _showDeleteConfirmation(String? userId, String? role, String? email) {
+    // Vérification supplémentaire pour s'assurer que les valeurs ne sont pas nulles
+    if (userId == null || role == null || email == null) {
+      print("Erreur : un des champs est null (id, role, email, ou password)");
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
-          title: Text('Confirmer la suppression',
-              style: TextStyle(color: Colors.red[800])),
-          content: const Text(
-              'Êtes-vous sûr de vouloir supprimer cet utilisateur ?'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: Text('Confirmer la suppression', style: TextStyle(color: Colors.red[800])),
+          content: const Text('Êtes-vous sûr de vouloir supprimer cet utilisateur et toutes ses données associées ?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -149,14 +178,31 @@ class _UtilisateurState extends State<Utilisateur> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red[800],
+                foregroundColor: Colors.red[800],
+                backgroundColor: Colors.white,
               ),
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(context); // Ferme le popup de confirmation
+
                 if (role == 'Admin') {
-                  _showAdminDeleteConfirmation(userId);
+                  // Si c'est un Admin, afficher un popup supplémentaire
+                  _showAdminDeleteConfirmation(userId, email);
                 } else {
-                  _deleteUser(userId);
+                  // Supprime directement pour les rôles Membre ou Partenaire
+                  _deleteUser(userId, email).then((_) {
+                    // Afficher un message de succès après la suppression
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Utilisateur supprimé avec succès'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+
+                    // Recharger la page après la suppression
+                    setState(() {
+                      // Vous pouvez éventuellement faire un appel ici pour rafraîchir les données
+                    });
+                  });
                 }
               },
               child: const Text('Supprimer'),
@@ -167,8 +213,11 @@ class _UtilisateurState extends State<Utilisateur> {
     );
   }
 
-  // Popup de confirmation supplémentaire pour les Admins
-  void _showAdminDeleteConfirmation(String userId) {
+
+
+
+  // Popup supplémentaire pour la suppression des Admins
+  void _showAdminDeleteConfirmation(String userId, String email) {
     bool _confirmResponsibility = false;
 
     showDialog(
@@ -179,8 +228,7 @@ class _UtilisateurState extends State<Utilisateur> {
             return AlertDialog(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
-              title: Text('Attention : Suppression d\'un Admin',
-                  style: TextStyle(color: Colors.orange[800])),
+              title: Text('Attention : Suppression d\'un Admin', style: TextStyle(color: Colors.orange[800])),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -189,8 +237,7 @@ class _UtilisateurState extends State<Utilisateur> {
                         'Cochez la case ci-dessous pour confirmer que vous assumez cette responsabilité.',
                   ),
                   CheckboxListTile(
-                    title: const Text(
-                        'Je comprends et assume la responsabilité.'),
+                    title: const Text('Je comprends et assume la responsabilité.'),
                     value: _confirmResponsibility,
                     onChanged: (value) {
                       setState(() {
@@ -207,14 +254,13 @@ class _UtilisateurState extends State<Utilisateur> {
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _confirmResponsibility
-                        ? Colors.red[800]
-                        : Colors.grey,
+                    foregroundColor: _confirmResponsibility ? Colors.white : Colors.red,
+                    backgroundColor: _confirmResponsibility ? Colors.red[800] : Colors.transparent,
                   ),
                   onPressed: _confirmResponsibility
                       ? () {
                     Navigator.pop(context);
-                    _deleteUser(userId);
+                    _deleteUser(userId, email);
                   }
                       : null,
                   child: const Text('Supprimer'),
@@ -225,6 +271,15 @@ class _UtilisateurState extends State<Utilisateur> {
         );
       },
     );
+  }
+
+
+  // Fonction pour bloquer ou débloquer un utilisateur
+  Future<void> _toggleBlockUser(String userId, bool isBlocked) async {
+    await FirebaseFirestore.instance.collection('users').doc(userId).update({
+      'isBlocked': !isBlocked,
+    });
+    setState(() {});
   }
 
   // Popup de création ou modification d'utilisateur avec liste de rôle sélective
@@ -351,19 +406,12 @@ class _UtilisateurState extends State<Utilisateur> {
   }
 
 
-  // Fonction pour bloquer ou débloquer un utilisateur
-  Future<void> _toggleBlockUser(String userId, bool isBlocked) async {
-    await FirebaseFirestore.instance.collection('users').doc(userId).update({
-      'isBlocked': !isBlocked,
-    });
-    setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Couleur.bg,
+        leading: const SizedBox.shrink(), // Retire l'icône de retour
         actions: [
           // Barre de recherche
           Expanded(
@@ -512,14 +560,19 @@ class _UtilisateurState extends State<Utilisateur> {
                                     userId: user['id'], userData: user),
                               ),
                               IconButton(
-                                icon: const Icon(
-                                    Icons.delete, color: Colors.red),
-                                onPressed: () async {
-                                  await FirebaseFirestore.instance.collection(
-                                      'users').doc(user['id']).delete();
-                                  setState(() {});
+                                icon: Icon(Icons.delete, color: Colors.red),
+                                onPressed: () {
+                                  // Récupération des informations de l'utilisateur
+                                  final userId = user['id']; // Assurez-vous que 'user' est bien défini et contient 'id'
+                                  final role = user['role'];
+                                  final email = user['email'];
+
+                                  // Appelle la fonction de popup de confirmation de suppression
+                                  _showDeleteConfirmation(userId, role, email);
                                 },
                               ),
+
+
                               IconButton(
                                 icon: Icon(
                                   isBlocked ? Icons.lock : Icons.lock_open,

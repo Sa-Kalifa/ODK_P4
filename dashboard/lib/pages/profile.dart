@@ -87,6 +87,7 @@ class _ProfileState extends State<Profile> {
       appBar: AppBar(
         title: const Text('Profile', style: TextStyle(color: Couleur.blanc, fontSize: 20),),
         backgroundColor: Couleur.pr,
+        leading: const SizedBox.shrink(), // Retire l'icône de retour
         actions: [
           IconButton(
             onPressed: _logout,

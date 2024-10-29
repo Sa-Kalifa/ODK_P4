@@ -20,6 +20,7 @@ class _PublicationState extends State<Publication> {
       appBar: AppBar(
         title: const Text('Gestion des publications', style: TextStyle(color: Colors.white)),
         backgroundColor: Couleur.pr,
+        leading: const SizedBox.shrink(), // Retire l'icône de retour
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _getStories(),
