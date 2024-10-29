@@ -12,6 +12,7 @@ class Utilisateur extends StatefulWidget {
 }
 
 class _UtilisateurState extends State<Utilisateur> {
+  @override
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -158,9 +159,8 @@ class _UtilisateurState extends State<Utilisateur> {
 
 // Popup de confirmation de suppression
   void _showDeleteConfirmation(String? userId, String? role, String? email) {
-    // Vérification supplémentaire pour s'assurer que les valeurs ne sont pas nulles
     if (userId == null || role == null || email == null) {
-      print("Erreur : un des champs est null (id, role, email, ou password)");
+      print("Erreur : un des champs est null (id, role, email)");
       return;
     }
 
@@ -185,22 +185,16 @@ class _UtilisateurState extends State<Utilisateur> {
                 Navigator.pop(context); // Ferme le popup de confirmation
 
                 if (role == 'Admin') {
-                  // Si c'est un Admin, afficher un popup supplémentaire
                   _showAdminDeleteConfirmation(userId, email);
                 } else {
-                  // Supprime directement pour les rôles Membre ou Partenaire
                   _deleteUser(userId, email).then((_) {
-                    // Afficher un message de succès après la suppression
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Utilisateur supprimé avec succès'),
-                        duration: Duration(seconds: 2),
-                      ),
+                      const SnackBar(content: Text('Utilisateur supprimé avec succès')),
                     );
 
-                    // Recharger la page après la suppression
+                    // Recharger automatiquement la page
                     setState(() {
-                      // Vous pouvez éventuellement faire un appel ici pour rafraîchir les données
+                      // Recharge des données ou rafraîchissement de l’interface
                     });
                   });
                 }
@@ -213,10 +207,7 @@ class _UtilisateurState extends State<Utilisateur> {
     );
   }
 
-
-
-
-  // Popup supplémentaire pour la suppression des Admins
+// Popup supplémentaire pour la suppression des Admins
   void _showAdminDeleteConfirmation(String userId, String email) {
     bool _confirmResponsibility = false;
 
@@ -260,7 +251,16 @@ class _UtilisateurState extends State<Utilisateur> {
                   onPressed: _confirmResponsibility
                       ? () {
                     Navigator.pop(context);
-                    _deleteUser(userId, email);
+                    _deleteUser(userId, email).then((_) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Admin supprimé avec succès')),
+                      );
+
+                      // Recharger automatiquement la page
+                      setState(() {
+                        // Recharge des données ou rafraîchissement de l’interface
+                      });
+                    });
                   }
                       : null,
                   child: const Text('Supprimer'),
@@ -405,6 +405,62 @@ class _UtilisateurState extends State<Utilisateur> {
     );
   }
 
+  // AppBar personnalisée avec barre de recherche, notification et profil
+  Widget _buildAppBar(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Centre les widgets
+      children: [
+        SizedBox(
+          width: 800,
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Rechercher un utilisateur...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: () {
+                  setState(() {}); // Actualise la liste filtrée
+                },
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10), // Espace entre recherche et filtre
+        IconButton(
+          icon: const Icon(Icons.filter_list),
+          onPressed: () {
+            // Filtre par rôle
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Filtrer par rôle'),
+                  content: DropdownButton<String>(
+                    value: _filterRole,
+                    items: ['Tous', 'Admin', 'Partenaire', 'Membre'].map((role) {
+                      return DropdownMenuItem<String>(
+                        value: role,
+                        child: Text(role),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _filterRole = value!;
+                        Navigator.pop(context); // Ferme le popup après sélection
+                      });
+                    },
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -412,60 +468,6 @@ class _UtilisateurState extends State<Utilisateur> {
       appBar: AppBar(
         backgroundColor: Couleur.bg,
         leading: const SizedBox.shrink(), // Retire l'icône de retour
-        actions: [
-          // Barre de recherche
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Rechercher un utilisateur...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.search),
-                    onPressed: () {
-                      setState(() {}); // Actualise la liste filtrée
-                    },
-                  ),
-                ),
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              // Filtre par rôle
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: const Text('Filtrer par rôle'),
-                    content: DropdownButton<String>(
-                      value: _filterRole,
-                      items: ['Tous', 'Admin', 'Partenaire', 'Membre'].map((
-                          role) {
-                        return DropdownMenuItem<String>(
-                          value: role,
-                          child: Text(role),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _filterRole = value!;
-                          Navigator.pop(
-                              context); // Ferme le popup après sélection
-                        });
-                      },
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showUserDialog(),
@@ -499,7 +501,9 @@ class _UtilisateurState extends State<Utilisateur> {
           return SingleChildScrollView(
             scrollDirection: Axis.vertical, // Active le défilement vertical
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _buildAppBar(context),
                 const SizedBox(height: 40),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -555,12 +559,12 @@ class _UtilisateurState extends State<Utilisateur> {
                             children: [
                               IconButton(
                                 icon: const Icon(
-                                    Icons.edit, color: Colors.blue),
+                                    Icons.edit, color: Couleur.pr),
                                 onPressed: () => _showUserDialog(
                                     userId: user['id'], userData: user),
                               ),
                               IconButton(
-                                icon: Icon(Icons.delete, color: Colors.red),
+                                icon: const Icon(Icons.delete, color: Colors.red),
                                 onPressed: () {
                                   // Récupération des informations de l'utilisateur
                                   final userId = user['id']; // Assurez-vous que 'user' est bien défini et contient 'id'

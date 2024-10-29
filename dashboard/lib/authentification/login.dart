@@ -42,7 +42,19 @@ class _LoginState extends State<Login> {
         password: passwordcontroller.text.trim(),
       );
 
-      // Vérifier le rôle après la connexion réussie
+      // Vérifier si le compte est bloqué en récupérant le champ `isBlocked` dans Firestore
+      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      if (userSnapshot.exists && userSnapshot['isBlocked'] == true) {
+        Navigator.pop(context);  // Fermer le chargement
+        _showBlockedMessage(context);
+        return;
+      }
+
+      // Si l'utilisateur n'est pas bloqué, continuer avec la vérification du rôle
       await RoleManager().checkUserRole(context, userCredential.user!);
 
     } on FirebaseAuthException catch (e) {
@@ -54,6 +66,20 @@ class _LoginState extends State<Login> {
       }
     }
   }
+
+// Affiche un message si le compte est bloqué
+  void _showBlockedMessage(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return const AlertDialog(
+          title: Text('Compte bloqué'),
+          content: Text('Votre compte a été bloqué. Veuillez contacter l\'administrateur.'),
+        );
+      },
+    );
+  }
+
 
   // Affiche un message d'erreur pour l'email incorrect
   void emailMessage(BuildContext context) {
