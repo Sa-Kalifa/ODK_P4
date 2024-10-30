@@ -219,7 +219,6 @@ class _DashboardPageState extends State<DashboardPage> {
     return snapshot.size;
   }
 
-
   // Fonction pour récupérer les statistiques mensuelles
   Future<Map<int, int>> _getMonthlyStatistics(String collection) async {
     Map<int, int> monthlyCounts = {};
@@ -342,7 +341,7 @@ class _DashboardPageState extends State<DashboardPage> {
           toY: y,
           width: 15,
           borderRadius: BorderRadius.circular(5),
-          color: Colors.blueAccent,
+          color: Couleur.pr,
         ),
       ],
     );

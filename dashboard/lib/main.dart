@@ -47,8 +47,7 @@ class MyApp extends StatelessWidget {
         '/signale': (context) => Signale(),
       },
       // Définissez la page d'accueil ou la page par défaut de votre application
-      // home: Login(),
-      home: Login(),
+       home: Login(),
       // Utilisation de GoRouter pour la gestion des routes
       //routerConfig: _router,
     );

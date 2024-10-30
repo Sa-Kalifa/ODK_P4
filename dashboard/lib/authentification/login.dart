@@ -262,7 +262,7 @@ class _LoginState extends State<Login> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               const Text(
-                                "Pas de compte?",
+                                "Accès réservé aux",
                                 style: TextStyle(color: Colors.black),
                               ),
                               const SizedBox(width: 5),
@@ -271,7 +271,7 @@ class _LoginState extends State<Login> {
                                   Navigator.pushNamed(context, '/inscription');
                                 },
                                 child: const Text(
-                                  "S'inscrire",
+                                  "Administrateurs",
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Couleur.pr,
