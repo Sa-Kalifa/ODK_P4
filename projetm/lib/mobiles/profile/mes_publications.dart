@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:projetm/mobiles/acceuil/detail_page.dart';
+
+import '../models/role_manager_histoire.dart';
 
 class MesPublications extends StatefulWidget {
   @override
@@ -28,6 +31,7 @@ class _MesPublicationsState extends State<MesPublications> {
 
       body: Column(
         children: [
+          const SizedBox(height: 30,),
           // Conteneur défilable horizontalement pour les catégories
           Container(
             height: 50,
@@ -88,14 +92,27 @@ class _MesPublicationsState extends State<MesPublications> {
       child: Text(
         category,
         style: TextStyle(
-          color: selectedCategory == category ? Color(0xFF914b14) : Colors.black,
-          fontWeight: selectedCategory == category ? FontWeight.bold : FontWeight.normal, fontSize: 15,
+          color: selectedCategory == category ? const Color(0xFF914b14) : Colors.black,
+          fontWeight: selectedCategory == category ? FontWeight.bold : FontWeight.normal, fontSize: 18,
         ),
       ),
     );
   }
 
-  // Méthode pour construire la carte des publications
+  Future<bool> _hasUserLiked(String postId) async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+
+    final likeDoc = await FirebaseFirestore.instance
+        .collection('histoires')
+        .doc(postId)
+        .collection('likes')
+        .doc(user.uid)
+        .get();
+
+    return likeDoc.exists;
+  }
+
   Widget _buildPostCard(Map<String, dynamic> post, String postId) {
     final bool isAnonymous = post['isAnonymous'] ?? false;
     final String userId = post['userId'] ?? 'Utilisateur inconnu';
@@ -104,8 +121,9 @@ class _MesPublicationsState extends State<MesPublications> {
     final String titre = post['titre'] ?? 'Titre non disponible';
     final DateTime? createdAt = (post['createdAt'] as Timestamp?)?.toDate();
     final List<dynamic> mediaUrls = post['mediaUrls'] ?? [];
-    final int likes = post['likes'] ?? 0;
+    int likes = post['likes'] ?? 0;
     final int shares = post['shares'] ?? 0;
+    final user = _auth.currentUser;
 
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
@@ -115,93 +133,126 @@ class _MesPublicationsState extends State<MesPublications> {
         }
         final userDoc = snapshot.data!;
         final String userName = isAnonymous ? 'Anonyme' : (userDoc['nom'] ?? 'Nom non disponible');
-        final String userImageUrl = userDoc['image_url'] ?? ''; // Récupération de l'URL de l'image de profil utilisateur
+        final String userImageUrl = userDoc['image_url'] ?? '';
 
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 10),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Affichage des informations de l'utilisateur, de la catégorie, etc.
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundImage: userImageUrl.isNotEmpty
-                              ? NetworkImage(userImageUrl)
-                              : const AssetImage('assets/default_user.png') as ImageProvider, // Affichage de l'image utilisateur ou image par défaut
-                        ),
-                        const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(userName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            Text(
-                              createdAt != null
-                                  ? '${createdAt.day}/${createdAt.month}/${createdAt.year}'
-                                  : 'Date non disponible',
-                              style: const TextStyle(color: Colors.grey),
+          child: InkWell(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PostDetailPage(postId: postId),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundImage: userImageUrl.isNotEmpty
+                                ? NetworkImage(userImageUrl)
+                                : const AssetImage('assets/default_user.png') as ImageProvider,
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(userName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                              Text(
+                                createdAt != null
+                                    ? '${createdAt.day}/${createdAt.month}/${createdAt.year}'
+                                    : 'Date non disponible',
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Text(category, style: const TextStyle(color: Color(0xFF914b14), fontWeight: FontWeight.bold)),
+                          IconButton(
+                            icon: const Icon(Icons.more_vert, color: Colors.grey),
+                            onPressed: () {
+                              RoleManager().showOptions(context, postId, post, userId);
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(titre, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  _buildDescription(description),
+                  const SizedBox(height: 15),
+                  if (mediaUrls.isNotEmpty) _buildImage(mediaUrls),
+                  const Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      FutureBuilder<bool>(
+                        future: _hasUserLiked(postId),
+                        builder: (context, snapshot) {
+                          bool isLiked = snapshot.data ?? false;
+
+                          return TextButton.icon(
+                            onPressed: () async {
+                              if (user != null) {
+                                final likeRef = FirebaseFirestore.instance
+                                    .collection('histoires')
+                                    .doc(postId)
+                                    .collection('likes')
+                                    .doc(user.uid);
+
+                                setState(() {
+                                  isLiked = !isLiked;
+                                  likes = isLiked ? likes + 1 : likes - 1;
+                                });
+
+                                if (isLiked) {
+                                  await likeRef.set({'likedAt': FieldValue.serverTimestamp()});
+                                } else {
+                                  await likeRef.delete();
+                                }
+
+                                FirebaseFirestore.instance
+                                    .collection('histoires')
+                                    .doc(postId)
+                                    .update({'likes': likes});
+                              }
+                            },
+                            icon: Icon(
+                              Icons.favorite,
+                              color: isLiked ? Colors.red : Colors.black,
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Text(category, style: const TextStyle(color: Color(0xFF914b14), fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(titre, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                _buildDescription(description),
-                const SizedBox(height: 15),
-                if (mediaUrls.isNotEmpty) _buildImage(mediaUrls),
-                const Divider(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Stack(
-                      alignment: Alignment.topRight,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.favorite, color: Color(0xFF914b14), size: 30),
-                          onPressed: () {
-                            setState(() {
-                              post['likes'] = likes + 1;
-                              FirebaseFirestore.instance.collection('histoires').doc(postId).update({'likes': likes + 1});
-                            });
-                          },
-                        ),
-                        Text('$likes'),
-                      ],
-                    ),
-                    TextButton.icon(
-                      onPressed: () {
-                        // Action pour les commentaires
-                      },
-                      icon: const Icon(Icons.comment, color: Color(0xFF914b14)),
-                      label: const Text('Commentaire'),
-                    ),
-                    TextButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          post['shares'] = shares + 1;
-                          FirebaseFirestore.instance.collection('histoires').doc(postId).update({'shares': shares + 1});
-                        });
-                      },
-                      icon: const Icon(Icons.share, color: Color(0xFF914b14)),
-                      label: Text('$shares'),
-                    ),
-                  ],
-                ),
-              ],
+                            label: Text(
+                              '$likes',
+                              style: TextStyle(color: isLiked ? Colors.red : Colors.black),
+                            ),
+                          );
+                        },
+                      ),
+                      TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            post['shares'] = shares + 1;
+                            FirebaseFirestore.instance.collection('histoires').doc(postId).update({'shares': shares + 1});
+                          });
+                        },
+                        icon: const Icon(Icons.share, color: Color(0xFF914b14)),
+                        label: Text('$shares'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );

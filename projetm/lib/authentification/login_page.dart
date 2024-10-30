@@ -40,18 +40,32 @@ class _LoginPageState extends State<LoginPage> {
     );
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      // Authentification avec Firebase
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailcontroller.text.trim(),
         password: passwordcontroller.text.trim(),
       );
 
-      // Appel de la méthode pour gérer les rôles après la connexion réussie
-      RoleManager().RoleUser(context);
+      // Vérification de l'état de blocage de l'utilisateur
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
 
+      if (userDoc.exists && userDoc['isBlocked'] == true) {
+        Navigator.pop(context); // Ferme le chargement
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Votre compte est désactivé. Veuillez contacter l\'administrateur.')),
+        );
+
+        // Déconnexion immédiate de l'utilisateur bloqué
+        await FirebaseAuth.instance.signOut();
+      } else {
+        // Appel de la méthode pour gérer les rôles après la connexion réussie
+        RoleManager().RoleUser(context);
+      }
     } on FirebaseAuthException catch (e) {
-      // Arrêt de la fenêtre de chargement
-      Navigator.pop(context);
-      // Gérer l'erreur ici
+      Navigator.pop(context); // Ferme le chargement
       if (e.code == 'user-not-found') {
         emailMessage(context);
       } else if (e.code == 'wrong-password') {
@@ -59,6 +73,7 @@ class _LoginPageState extends State<LoginPage> {
       }
     }
   }
+
 
   // Les Méthodes de Message d'erreur
   // Email
@@ -220,7 +235,6 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-
 }
 
 // ******************** La gestion de Role **********************************

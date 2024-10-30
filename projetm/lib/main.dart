@@ -47,7 +47,8 @@ class MyApp extends StatelessWidget {
         '/histoire': (context) => Histoire(),
       },
       // Définissez la page d'accueil ou la page par défaut de votre application
-      home: IntroPage(),
+      //home: IntroPage(),
+      home: Accueil(),
     );
   }
 }
