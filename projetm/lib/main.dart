@@ -49,14 +49,14 @@ class MyApp extends StatelessWidget {
 
       // Routes de navigation statiques
       routes: {
-        '/login': (context) => LoginPage(),
+        '/login': (context) => const LoginPage(),
         '/accueil': (context) => Accueil(),
         '/profile': (context) => Profile(),
         '/inscription': (context) => Inscription(),
-        '/histoire': (context) => Histoire(),
+        '/histoire': (context) => const Histoire(),
       },
       // Page d'accueil de l'application
-      home: LoginPage(),
+      home: Inscription(),
     );
   }
 }

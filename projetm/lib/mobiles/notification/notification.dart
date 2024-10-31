@@ -140,15 +140,16 @@ class _NotificationPageState extends State<NotificationPage> {
           children: [
             GestureDetector(
               onTap: _showUserInfoDialog,
-              child: CircleAvatar(
+              child: const CircleAvatar(
                 backgroundImage: NetworkImage('https://via.placeholder.com/150'), // Remplacer par l'URL réelle de la photo de profil de l'utilisateur
               ),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 30),
             Text('Discussion', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30)),
           ],
         ),
         centerTitle: true,
+        leading: const SizedBox.shrink(), // Retire l'icône de retour
       ),
       body: Column(
         children: <Widget>[
@@ -195,6 +196,10 @@ class _NotificationPageState extends State<NotificationPage> {
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: <Widget>[
+                IconButton(
+                  icon: Icon(Icons.attach_file),
+                  onPressed: _sendFile,
+                ),
                 Expanded(
                   child: TextFormField(
                     controller: _messageController,
@@ -209,17 +214,19 @@ class _NotificationPageState extends State<NotificationPage> {
                   icon: Icon(Icons.send),
                   onPressed: () => _sendMessage(_messageController.text, 'text'),
                 ),
-                IconButton(
-                  icon: Icon(Icons.attach_file),
-                  onPressed: _sendFile,
-                ),
               ],
             ),
           ),
           TextButton(
             onPressed: _openUserList,
-            child: Text('Discuter avec d\'autres utilisateurs'),
+            child: const Text(
+                'Discuter avec d\'autres',
+              style: TextStyle(
+                color: Color(0xFF914b14),
+              ),
+            ),
           ),
+          const SizedBox(height: 40,),
         ],
       ),
       bottomNavigationBar: const CustomBottomAppBar(currentIndex: 2),

@@ -13,6 +13,29 @@ class MesPublications extends StatefulWidget {
 class _MesPublicationsState extends State<MesPublications> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   String selectedCategory = 'Tous'; // Par défaut, afficher toutes les publications
+  final _searchController = TextEditingController();
+  String? userEmail; // Ajouter une variable pour stocker l'email
+  String? userName; // Ajouter une variable pour stocker le nom
+  String? userImageUrl; // Ajouter une variable pour stocker l'URL de l'image
+
+  @override
+  void initState() {
+    super.initState();
+    _getUserData(); // Récupérer les données de l'utilisateur lors de l'initialisation
+  }
+
+  // Méthode pour récupérer les données de l'utilisateur
+  Future<void> _getUserData() async {
+    final User? user = _auth.currentUser;
+    if (user != null) {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      setState(() {
+        userEmail = user.email; // Récupérer l'email de l'utilisateur
+        userName = userDoc['nom']; // Récupérer le nom de l'utilisateur
+        userImageUrl = userDoc['image_url']; // Récupérer l'URL de l'image de l'utilisateur
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,58 +51,93 @@ class _MesPublicationsState extends State<MesPublications> {
         backgroundColor: const Color(0xFF914b14),
         iconTheme: const IconThemeData(color: Colors.white), // Change la couleur du back button en blanc
       ),
-
-      body: Column(
-        children: [
-          const SizedBox(height: 30,),
-          // Conteneur défilable horizontalement pour les catégories
-          Container(
-            height: 50,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                buildCategoryButton('Tous'),
-                buildCategoryButton('Immigration'),
-                buildCategoryButton('Violence'),
-                buildCategoryButton('Racisme'),
-                buildCategoryButton('Injustice'),
-                buildCategoryButton('Deplace'),
-              ],
-            ),
+      body: SingleChildScrollView( // Envelopper tout le contenu du body
+        child: Padding( // Ajouter du padding pour les marges
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Column(
+            children: [
+              const SizedBox(height: 20,),
+              // Affichage de l'image de profil, du nom et de l'email
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center, // Centrer le contenu
+                    children: [
+                      CircleAvatar(
+                        radius: 40,
+                        backgroundImage: userImageUrl != null
+                            ? NetworkImage(userImageUrl!)
+                            : const AssetImage('assets/default_user.png') as ImageProvider,
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            userName ?? 'Nom non disponible',
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF914b14),),
+                          ),
+                          Text(
+                            userEmail ?? 'Email non disponible',
+                            style: const TextStyle(color: Colors.black87),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              //const SizedBox(height: 5),
+              // Conteneur pour les catégories
+              Container(
+                height: 50,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    buildCategoryButton('Tous'),
+                    buildCategoryButton('Immigration'),
+                    buildCategoryButton('Violence'),
+                    buildCategoryButton('Racisme'),
+                    buildCategoryButton('Injustice'),
+                    buildCategoryButton('Deplace'),
+                  ],
+                ),
+              ),
+              // Utilisation d'un StreamBuilder pour afficher les histoires
+              StreamBuilder<QuerySnapshot>(
+                stream: (selectedCategory == 'Tous')
+                    ? FirebaseFirestore.instance.collection('histoires')
+                    .where('userId', isEqualTo: userId)
+                    .snapshots()
+                    : FirebaseFirestore.instance.collection('histoires')
+                    .where('userId', isEqualTo: userId)
+                    .where('categorie', isEqualTo: selectedCategory)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final posts = snapshot.data!.docs;
+                  if (posts.isEmpty) {
+                    return const Center(child: Text('Aucune publication trouvée.'));
+                  }
+                  return Column(
+                    children: posts.map((post) {
+                      final postData = post.data() as Map<String, dynamic>;
+                      final postId = post.id;
+                      return _buildPostCard(postData, postId);
+                    }).toList(),
+                  );
+                },
+              ),
+            ],
           ),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: (selectedCategory == 'Tous')
-                  ? FirebaseFirestore.instance.collection('histoires')
-                  .where('userId', isEqualTo: userId)
-                  .snapshots()
-                  : FirebaseFirestore.instance.collection('histoires')
-                  .where('userId', isEqualTo: userId)
-                  .where('categorie', isEqualTo: selectedCategory)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final posts = snapshot.data!.docs;
-                if (posts.isEmpty) {
-                  return const Center(child: Text('Aucune publication trouvée.'));
-                }
-                return ListView.builder(
-                  itemCount: posts.length,
-                  itemBuilder: (context, index) {
-                    final post = posts[index].data() as Map<String, dynamic>;
-                    final postId = posts[index].id;
-                    return _buildPostCard(post, postId);
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
+
 
   // Méthode pour créer un TextButton pour chaque catégorie
   TextButton buildCategoryButton(String category) {
@@ -93,7 +151,8 @@ class _MesPublicationsState extends State<MesPublications> {
         category,
         style: TextStyle(
           color: selectedCategory == category ? const Color(0xFF914b14) : Colors.black,
-          fontWeight: selectedCategory == category ? FontWeight.bold : FontWeight.normal, fontSize: 18,
+          fontWeight: selectedCategory == category ? FontWeight.bold : FontWeight.normal,
+          fontSize: 18,
         ),
       ),
     );
@@ -146,7 +205,7 @@ class _MesPublicationsState extends State<MesPublications> {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -239,6 +298,7 @@ class _MesPublicationsState extends State<MesPublications> {
                           );
                         },
                       ),
+
                       TextButton.icon(
                         onPressed: () {
                           setState(() {

@@ -135,7 +135,7 @@ class _LoginPageState extends State<LoginPage> {
                       style: const TextStyle(color: Colors.black), // Texte en noir
                       decoration: const InputDecoration(
                         labelText: 'Email',
-                        prefixIcon: Icon(Icons.email, color: Colors.black), // Icône pour l'email
+                        prefixIcon: Icon(Icons.email, color: Color(0xFF914b14),), // Icône pour l'email
                         labelStyle: TextStyle(color: Colors.black), // Style de texte pour l'étiquette
                         border: OutlineInputBorder(), // Bordure pour le champ
                       ),
@@ -155,7 +155,7 @@ class _LoginPageState extends State<LoginPage> {
                       style: const TextStyle(color: Colors.black), // Texte en noir
                       decoration: InputDecoration(
                         labelText: 'Mot de passe',
-                        prefixIcon: const Icon(Icons.lock, color: Colors.black), // Icône pour le mot de passe
+                        prefixIcon: const Icon(Icons.lock, color: Color(0xFF914b14),), // Icône pour le mot de passe
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword ? Icons.visibility : Icons.visibility_off, // Icône pour afficher/masquer
@@ -327,7 +327,7 @@ class MyBouton extends StatelessWidget {
         padding: const EdgeInsets.all(15),
         margin: const EdgeInsets.symmetric(horizontal: 50),
         decoration: BoxDecoration(
-          color: Color(0xFF914b14),
+          color: const Color(0xFF914b14),
           borderRadius: BorderRadius.circular(8),
         ),
         child:const Text(

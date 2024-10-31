@@ -71,8 +71,8 @@ class _SignUpPageState extends State<Inscription> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Row(
-            children: const [
+          title: const Row(
+            children: [
               Icon(Icons.check_circle, color: Color(0xFF914b14)),
               SizedBox(width: 10),
               Text('Succès'),
@@ -167,7 +167,7 @@ class _SignUpPageState extends State<Inscription> {
                       style: const TextStyle(color: Colors.black),
                       decoration: const InputDecoration(
                         labelText: 'Nom et Prenom',
-                        prefixIcon: Icon(Icons.person, color: Colors.black),
+                        prefixIcon: Icon(Icons.person, color: Color(0xFF914b14),),
                         labelStyle: TextStyle(color: Colors.black),
                         border: OutlineInputBorder(),
                       ),
@@ -186,7 +186,7 @@ class _SignUpPageState extends State<Inscription> {
                       style: const TextStyle(color: Colors.black),
                       decoration: const InputDecoration(
                         labelText: 'Email',
-                        prefixIcon: Icon(Icons.email, color: Colors.black),
+                        prefixIcon: Icon(Icons.email, color: Color(0xFF914b14),),
                         labelStyle: TextStyle(color: Colors.black),
                         border: OutlineInputBorder(),
                       ),
@@ -206,7 +206,7 @@ class _SignUpPageState extends State<Inscription> {
                       style: const TextStyle(color: Colors.black),
                       decoration: InputDecoration(
                         labelText: 'Mot de passe',
-                        prefixIcon: const Icon(Icons.lock, color: Colors.black),
+                        prefixIcon: const Icon(Icons.lock, color: Color(0xFF914b14),),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword ? Icons.visibility : Icons.visibility_off,
@@ -237,7 +237,7 @@ class _SignUpPageState extends State<Inscription> {
                       style: const TextStyle(color: Colors.black),
                       decoration: InputDecoration(
                         labelText: 'Confirmer votre mot de passe',
-                        prefixIcon: const Icon(Icons.lock, color: Colors.black),
+                        prefixIcon: const Icon(Icons.lock, color: Color(0xFF914b14),),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
@@ -268,7 +268,7 @@ class _SignUpPageState extends State<Inscription> {
                       style: const TextStyle(color: Colors.black),
                       decoration: const InputDecoration(
                         labelText: 'Téléphone',
-                        prefixIcon: Icon(Icons.phone, color: Colors.black),
+                        prefixIcon: Icon(Icons.phone, color: Color(0xFF914b14),),
                         labelStyle: TextStyle(color: Colors.black),
                         border: OutlineInputBorder(),
                       ),
