@@ -48,8 +48,14 @@ class _SignUpPageState extends State<Inscription> {
         _showSuccessDialog();
 
       } on FirebaseAuthException catch (e) {
+        // Affiche une erreur si l'inscription échoue
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ce compte existe déjà. Veuillez vous connecter.')),
+          SnackBar(content: Text('Erreur: ${e.message}')),
+        );
+      } catch (e) {
+        // Capture les autres erreurs
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: ${e.toString()}')),
         );
       } finally {
         setState(() {
