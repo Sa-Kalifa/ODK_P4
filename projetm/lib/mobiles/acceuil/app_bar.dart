@@ -47,7 +47,11 @@ class _CustomBottomAppBarState extends State<CustomBottomAppBar> {
             Navigator.pushNamed(context, '/histoire');
             break;
           case 2:
-            Navigator.pushNamed(context, '/notification');
+            Navigator.pushNamed(
+              context,
+              '/notification',
+              arguments: 'idUtilisateurExemple', // Remplacez par l'ID de l'utilisateur cible
+            );
             break;
           case 3:
             Navigator.pushNamed(context, '/profile');

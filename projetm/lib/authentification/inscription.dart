@@ -17,13 +17,8 @@ class _SignUpPageState extends State<Inscription> {
   String _confirmPassword = ''; // Nouvelle variable pour le champ de confirmation
   String _nom = '';
   String _tel = ''; // Variable pour le numéro de téléphone
-  String _role = 'Membre'; // Rôle par défaut
   bool _obscurePassword = true; // Variable pour cacher ou montrer le mot de passe
   bool _obscureConfirmPassword = true; // Variable pour cacher ou montrer la confirmation du mot de passe
-
-  // Liste des rôles disponibles
-  List<String> roles = ['Membre', 'Partenaire', 'Admin'];
-
   bool _isLoading = false;
 
   // Fonction pour s'inscrire et ajouter l'utilisateur à Firestore
@@ -40,12 +35,13 @@ class _SignUpPageState extends State<Inscription> {
           password: _password,
         );
 
-        // Ajouter les détails de l'utilisateur dans Firestore
+        // Ajouter les détails de l'utilisateur dans Firestore avec le rôle par défaut "Membre" et isBlocked à false
         await _firestore.collection('users').doc(userCredential.user!.uid).set({
           'nom': _nom,
           'email': _email,
           'tel': _tel,
-          'role': _role,
+          'role': 'Membre', // Attribue automatiquement le rôle "Membre"
+          'isBlocked': false, // Ajout de la variable isBlocked
         });
 
         // Afficher un message de succès et rediriger
@@ -81,7 +77,7 @@ class _SignUpPageState extends State<Inscription> {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                _redirectUserBasedOnRole();
+                Navigator.pushNamed(context, '/accueil');
               },
               child: const Text('OK'),
             ),
@@ -89,20 +85,6 @@ class _SignUpPageState extends State<Inscription> {
         );
       },
     );
-  }
-
-  // Rediriger l'utilisateur selon son rôle
-  void _redirectUserBasedOnRole() {
-    switch (_role) {
-      case 'Admin':
-        Navigator.pushNamed(context, '/dashboard');
-        break;
-      case 'Partenaire':
-        Navigator.pushNamed(context, '/accueil');
-        break;
-      default: // Membre
-        Navigator.pushNamed(context, '/accueil');
-    }
   }
 
   @override
@@ -116,12 +98,12 @@ class _SignUpPageState extends State<Inscription> {
         child: SingleChildScrollView(
           child: Column(
             children: <Widget>[
-              const SizedBox(height: 30),  // Espace de 40 en haut du logo
+              const SizedBox(height: 30),
               // Logo et titre "S'INSCRIRE"
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset('lib/assets/images/Logo01.png', height: 60), // Logo
+                  Image.asset('lib/assets/images/Logo01.png', height: 60),
                   const SizedBox(width: 80),
                   const Text(
                     "S'INSCRIRE",
@@ -139,7 +121,7 @@ class _SignUpPageState extends State<Inscription> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   IconButton(
-                    icon: Image.asset('lib/assets/images/google.png',),
+                    icon: Image.asset('lib/assets/images/google.png'),
                     iconSize: 40,
                     onPressed: () {
                       // Logique de connexion Google
@@ -147,7 +129,7 @@ class _SignUpPageState extends State<Inscription> {
                   ),
                   const SizedBox(width: 20),
                   IconButton(
-                    icon: Image.asset('lib/assets/images/anonymous.png',),
+                    icon: Image.asset('lib/assets/images/anonymous.png'),
                     iconSize: 40,
                     onPressed: () {
                       // Logique de connexion Facebook
@@ -166,7 +148,7 @@ class _SignUpPageState extends State<Inscription> {
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
-                  )
+                  ),
                 ],
               ),
               const SizedBox(height: 30),
@@ -176,7 +158,7 @@ class _SignUpPageState extends State<Inscription> {
                 child: Column(
                   children: <Widget>[
                     TextFormField(
-                      style: const TextStyle(color: Colors.black), // Texte en noir
+                      style: const TextStyle(color: Colors.black),
                       decoration: const InputDecoration(
                         labelText: 'Nom et Prenom',
                         prefixIcon: Icon(Icons.person, color: Colors.black),
@@ -195,7 +177,7 @@ class _SignUpPageState extends State<Inscription> {
                     ),
                     const SizedBox(height: 10),
                     TextFormField(
-                      style: const TextStyle(color: Colors.black), // Texte en noir
+                      style: const TextStyle(color: Colors.black),
                       decoration: const InputDecoration(
                         labelText: 'Email',
                         prefixIcon: Icon(Icons.email, color: Colors.black),
@@ -215,7 +197,7 @@ class _SignUpPageState extends State<Inscription> {
                     ),
                     const SizedBox(height: 10),
                     TextFormField(
-                      style: const TextStyle(color: Colors.black), // Texte en noir
+                      style: const TextStyle(color: Colors.black),
                       decoration: InputDecoration(
                         labelText: 'Mot de passe',
                         prefixIcon: const Icon(Icons.lock, color: Colors.black),
@@ -245,9 +227,8 @@ class _SignUpPageState extends State<Inscription> {
                       },
                     ),
                     const SizedBox(height: 10),
-                    // Nouveau champ : Confirmer le mot de passe
                     TextFormField(
-                      style: const TextStyle(color: Colors.black), // Texte en noir
+                      style: const TextStyle(color: Colors.black),
                       decoration: InputDecoration(
                         labelText: 'Confirmer votre mot de passe',
                         prefixIcon: const Icon(Icons.lock, color: Colors.black),
@@ -277,50 +258,24 @@ class _SignUpPageState extends State<Inscription> {
                       },
                     ),
                     const SizedBox(height: 10),
-                    // Champ de saisie Téléphone + Sélecteur de rôle dans la même ligne
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            style: const TextStyle(color: Colors.black), // Texte en noir
-                            decoration: const InputDecoration(
-                              labelText: 'Téléphone',
-                              prefixIcon: Icon(Icons.phone, color: Colors.black),
-                              labelStyle: TextStyle(color: Colors.black),
-                              border: OutlineInputBorder(),
-                            ),
-                            keyboardType: TextInputType.phone,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Veuillez entrer votre numéro de téléphone';
-                              }
-                              return null;
-                            },
-                            onChanged: (value) {
-                              _tel = value;
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        // Sélecteur de rôle
-                        DropdownButton<String>(
-                          value: _role,
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              _role = newValue!;
-                            });
-                          },
-                          items: roles.map((String role) {
-                            return DropdownMenuItem<String>(
-                              value: role,
-                              child: Text(
-                                role,
-                                style: const TextStyle(color: Colors.black), // Texte en noir
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ],
+                    TextFormField(
+                      style: const TextStyle(color: Colors.black),
+                      decoration: const InputDecoration(
+                        labelText: 'Téléphone',
+                        prefixIcon: Icon(Icons.phone, color: Colors.black),
+                        labelStyle: TextStyle(color: Colors.black),
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.phone,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Veuillez entrer votre numéro de téléphone';
+                        }
+                        return null;
+                      },
+                      onChanged: (value) {
+                        _tel = value;
+                      },
                     ),
                     const SizedBox(height: 40),
                     ElevatedButton(
@@ -339,7 +294,6 @@ class _SignUpPageState extends State<Inscription> {
                     ),
                     const SizedBox(height: 60),
 
-                    // Lien vers la page de connexion
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
@@ -357,7 +311,7 @@ class _SignUpPageState extends State<Inscription> {
                             "Connecter Vous",
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF914b14), // Couleur du lien
+                              color: Color(0xFF914b14),
                             ),
                           ),
                         ),

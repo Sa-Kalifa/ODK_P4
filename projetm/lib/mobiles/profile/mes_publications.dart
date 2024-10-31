@@ -229,7 +229,7 @@ class _MesPublicationsState extends State<MesPublications> {
                               }
                             },
                             icon: Icon(
-                              Icons.favorite,
+                              Icons.favorite_border,
                               color: isLiked ? Colors.red : Colors.black,
                             ),
                             label: Text(

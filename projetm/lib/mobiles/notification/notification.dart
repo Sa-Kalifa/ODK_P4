@@ -1,133 +1,226 @@
-import'package:flutter/material.dart';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:file_picker/file_picker.dart';
 import '../acceuil/app_bar.dart';
 
 class NotificationPage extends StatefulWidget {
-  const NotificationPage({super.key});
+  final String otherUserId; // ID de l'utilisateur avec qui discuter
+  const NotificationPage({super.key, required this.otherUserId});
 
   @override
   State<NotificationPage> createState() => _NotificationPageState();
 }
 
 class _NotificationPageState extends State<NotificationPage> {
-
   final _messageController = TextEditingController();
-  final List<Map<String, dynamic>> _messages = [
-    {
-      'role': 'Admin',
-      'message': 'Bonjour, comment puis-je vous aider aujourd\'hui ?',
-      'timestamp': DateTime.now().subtract(Duration(minutes: 5))
-    },
-    {
-      'role': 'Partenaire',
-      'message': 'J\'ai une question sur le dernier exercice.',
-      'timestamp': DateTime.now().subtract(Duration(minutes: 3))
-    },
-    {
-      'role': 'Membre',
-      'message': 'Bien sûr, quel est votre problème ?',
-      'timestamp': DateTime.now().subtract(Duration(minutes: 1))
-    }
-  ];
+  final User? currentUser = FirebaseAuth.instance.currentUser;
+  List<Map<String, dynamic>> _messages = []; // Liste des messages pour la discussion
+  List<Map<String, dynamic>> _users = []; // Liste des utilisateurs disponibles
 
-  void _sendMessage() {
-    final message = _messageController.text;
-    if (message.isNotEmpty) {
-      setState(() {
-        _messages.add({
-          'role': 'Membre',
-          'message': message,
-          'timestamp': DateTime.now()
-        });
-        _messageController.clear();
+  @override
+  void initState() {
+    super.initState();
+    _loadMessages(); // Charger les messages lorsque la page est initialisée
+  }
+
+  Future<void> _loadMessages() async {
+    // Charger les messages de l'utilisateur courant avec l'autre utilisateur
+    final messagesSnapshot = await FirebaseFirestore.instance
+        .collection('chats')
+        .where('senderId', isEqualTo: currentUser?.uid)
+        .where('receiverId', isEqualTo: widget.otherUserId)
+        .orderBy('timestamp')
+        .get();
+
+    setState(() {
+      _messages = messagesSnapshot.docs.map((doc) {
+        return {
+          'senderId': doc['senderId'],
+          'content': doc['content'],
+          'timestamp': doc['timestamp'],
+          'type': doc['type'],
+        };
+      }).toList();
+    });
+  }
+
+  void _sendMessage(String content, String type) async {
+    if (content.isNotEmpty) {
+      await FirebaseFirestore.instance.collection('chats').add({
+        'senderId': currentUser?.uid,
+        'receiverId': widget.otherUserId,
+        'content': content,
+        'type': type,
+        'timestamp': FieldValue.serverTimestamp(),
       });
+      _messageController.clear();
     }
   }
 
-  String _formatTimestamp(DateTime timestamp) {
-    // Formate la date et l'heure en "dd/MM/yyyy HH:mm"
-    String day = timestamp.day.toString().padLeft(2, '0');
-    String month = timestamp.month.toString().padLeft(2, '0');
-    String year = timestamp.year.toString();
-    String hour = timestamp.hour.toString().padLeft(2, '0');
-    String minute = timestamp.minute.toString().padLeft(2, '0');
-    return '$day/$month/$year $hour:$minute';
+  Future<void> _sendFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    if (result != null) {
+      String fileName = result.files.single.name;
+      UploadTask uploadTask = FirebaseStorage.instance
+          .ref('chat_files/$fileName')
+          .putFile(File(result.files.single.path!));
+
+      TaskSnapshot snapshot = await uploadTask;
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+      _sendMessage(downloadUrl, 'file');
+    }
   }
+
+  String _formatTimestamp(Timestamp timestamp) {
+    DateTime dateTime = timestamp.toDate();
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute}';
+  }
+
+  void _showUserInfoDialog() async {
+    // Afficher les informations de l'utilisateur
+    final userInfo = await FirebaseFirestore.instance.collection('users').doc(widget.otherUserId).get();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(userInfo['name']),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.network(userInfo['photoUrl']),
+            Text("Email: ${userInfo['email']}"),
+            Text("Role: ${userInfo['role']}"),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Fermer')),
+        ],
+      ),
+    );
+  }
+
+  void _openUserList() async {
+    // Ouvrir la liste des utilisateurs pour démarrer une conversation
+    final userList = await FirebaseFirestore.instance.collection('users').get();
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return ListView(
+          children: userList.docs.map((userDoc) {
+            return ListTile(
+              leading: CircleAvatar(
+                backgroundImage: NetworkImage(userDoc['photoUrl'] ?? 'https://via.placeholder.com/150'), // Image de profil
+              ),
+              title: Text(userDoc['name']),
+              subtitle: Text(userDoc['role']),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => NotificationPage(otherUserId: userDoc.id),
+                  ),
+                );
+              },
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Discussion', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30)),
-        centerTitle: true, // Centre le titre
-        leading: SizedBox.shrink(), // Retire l'icône de retour
-      ),
-      body: Padding(
-        padding: const EdgeInsets.only(top: 40.0), // Espace plus grand entre l'en-tête et le contenu
-        child: Column(
-          children: <Widget>[
-            Expanded(
-              child: ListView.builder(
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final message = _messages[index];
-                  final isFormateur = message['role'] == 'Partenaire';
-                  final timestamp = message['timestamp'] as DateTime;
-                  final formattedTime = _formatTimestamp(timestamp);
-
-                  return Align(
-                    alignment: isFormateur ? Alignment.centerLeft : Alignment.centerRight,
-                    child: Container(
-                      margin: EdgeInsets.symmetric(vertical: 15, horizontal: 8), // Espace entre les messages
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isFormateur ? Colors.grey[200] : Colors.blue[300],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            message['message']!,
-                            style: TextStyle(color: isFormateur ? Colors.black : Colors.white),
-                          ),
-                          SizedBox(height: 8), // Espace entre le message et la date
-                          Text(
-                            formattedTime,
-                            style: TextStyle(
-                              color: isFormateur ? Colors.black54 : Colors.white54,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+        title: Row(
+          children: [
+            GestureDetector(
+              onTap: _showUserInfoDialog,
+              child: CircleAvatar(
+                backgroundImage: NetworkImage('https://via.placeholder.com/150'), // Remplacer par l'URL réelle de la photo de profil de l'utilisateur
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: TextFormField(
-                      controller: _messageController,
-                      decoration: InputDecoration(
-                        hintText: 'Écrire un message...',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  IconButton(
-                    icon: Icon(Icons.send),
-                    onPressed: _sendMessage,
-                  ),
-                ],
-              ),
-            ),
+            SizedBox(width: 10),
+            Text('Discussion', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30)),
           ],
         ),
+        centerTitle: true,
+      ),
+      body: Column(
+        children: <Widget>[
+          Expanded(
+            child: _messages.isNotEmpty
+                ? ListView.builder(
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final message = _messages[index];
+                final isMe = message['senderId'] == currentUser?.uid;
+                return Align(
+                  alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    margin: EdgeInsets.symmetric(vertical: 15, horizontal: 8),
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isMe ? Colors.blue[300] : Colors.grey[200],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          message['content'],
+                          style: TextStyle(color: isMe ? Colors.white : Colors.black),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          _formatTimestamp(message['timestamp']),
+                          style: TextStyle(
+                            color: isMe ? Colors.white54 : Colors.black54,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            )
+                : Center(child: Text('Aucune discussion en cours.')),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: TextFormField(
+                    controller: _messageController,
+                    decoration: const InputDecoration(
+                      hintText: 'Écrire un message...',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.send),
+                  onPressed: () => _sendMessage(_messageController.text, 'text'),
+                ),
+                IconButton(
+                  icon: Icon(Icons.attach_file),
+                  onPressed: _sendFile,
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: _openUserList,
+            child: Text('Discuter avec d\'autres utilisateurs'),
+          ),
+        ],
       ),
       bottomNavigationBar: const CustomBottomAppBar(currentIndex: 2),
     );

@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:projetm/mobiles/introduction/intro_page.dart';
-import 'authentification/inscription.dart';
-import 'firebase_options.dart';
+import 'package:projetm/authentification/inscription.dart';
+import 'package:projetm/firebase_options.dart';
 
 import 'package:projetm/mobiles/acceuil/accueil.dart';
 import 'package:projetm/mobiles/acceuil/histoire.dart';
 import 'package:projetm/mobiles/notification/notification.dart';
-import 'authentification/login_page.dart';
-import 'mobiles/profile/profile.dart';
-
-
+import 'package:projetm/authentification/login_page.dart';
+import 'package:projetm/mobiles/profile/profile.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,20 +33,30 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.light,
         primaryColor: const Color(0xFF914B14), // Couleur principale de l'application
       ),
-      // routerConfig: routerConfig,
-      routes: {
-        // Routes pour la navigation
 
+      // Gestionnaire de routes dynamiques pour le passage de paramètres
+      onGenerateRoute: (settings) {
+        if (settings.name == '/notification') {
+          // Obtient le paramètre otherUserId passé comme argument
+          final String otherUserId = settings.arguments as String;
+          return MaterialPageRoute(
+            builder: (context) => NotificationPage(otherUserId: otherUserId),
+          );
+        }
+        // Ajoutez d'autres routes dynamiques si besoin
+        return null;
+      },
+
+      // Routes de navigation statiques
+      routes: {
         '/login': (context) => LoginPage(),
         '/accueil': (context) => Accueil(),
         '/profile': (context) => Profile(),
         '/inscription': (context) => Inscription(),
-        '/notification': (context) => NotificationPage(),
         '/histoire': (context) => Histoire(),
       },
-      // Définissez la page d'accueil ou la page par défaut de votre application
-      //home: IntroPage(),
-      home: Accueil(),
+      // Page d'accueil de l'application
+      home: LoginPage(),
     );
   }
 }

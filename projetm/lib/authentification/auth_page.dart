@@ -24,7 +24,6 @@ class AuthPage extends StatelessWidget {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-
                 if (snapshot.hasData) {
                   final role = snapshot.data!['role'];
 
@@ -34,7 +33,6 @@ class AuthPage extends StatelessWidget {
                     return  Accueil();
                   }
                 }
-
                 return const LoginPage(); // Si le rôle n'est pas trouvé
               },
             );

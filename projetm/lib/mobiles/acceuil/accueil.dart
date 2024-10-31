@@ -1,10 +1,11 @@
+import 'dart:math';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:projetm/mobiles/acceuil/app_bar.dart';
 import 'package:projetm/mobiles/acceuil/detail_page.dart';
-
 import '../models/role_manager_histoire.dart';
 
 class Accueil extends StatefulWidget {
@@ -61,7 +62,7 @@ class _AccueilState extends State<Accueil> {
                     ),
                   ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
               _buildPartenaireCards(),
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
@@ -90,45 +91,6 @@ class _AccueilState extends State<Accueil> {
         ),
       ),
       bottomNavigationBar: const CustomBottomAppBar(currentIndex: 0),
-    );
-  }
-
-  Widget _buildPartenaireCards() {
-    return Container(
-      height: 150,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          _buildSinglePartenaireCard('Partenaire 1'),
-          _buildSinglePartenaireCard('Partenaire 2'),
-          _buildSinglePartenaireCard('Partenaire 3'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSinglePartenaireCard(String title) {
-    return Container(
-      width: 150,
-      margin: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        color: const Color(0xFF914b14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 3,
-            blurRadius: 5,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Text(
-          title,
-          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-      ),
     );
   }
 
@@ -262,7 +224,7 @@ class _AccueilState extends State<Accueil> {
                               }
                             },
                             icon: Icon(
-                              Icons.favorite,
+                              Icons.favorite_border,
                               color: isLiked ? Colors.red : Colors.black,
                             ),
                             label: Text(
@@ -335,7 +297,6 @@ class _AccueilState extends State<Accueil> {
     }
   }
 
-
   Widget _buildDescription(String description) {
     const int maxChars = 100;
     if (description.length <= maxChars) {
@@ -348,6 +309,92 @@ class _AccueilState extends State<Accueil> {
         ],
       );
     }
+  }
+
+  Widget _buildPartenaireCards() {
+    return FutureBuilder<QuerySnapshot>(
+      future: FirebaseFirestore.instance.collection('histoires').get(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final histoires = snapshot.data!.docs;
+        final random = Random();
+
+        // Mélange les histoires pour afficher les images aléatoirement
+        histoires.shuffle(random);
+
+        return CarouselSlider.builder(
+          itemCount: histoires.length,
+          itemBuilder: (BuildContext context, int index, int realIndex) {
+            final histoire = histoires[index].data() as Map<String, dynamic>;
+            final String imageUrl = histoire['mediaUrls'].isNotEmpty ? histoire['mediaUrls'][0] : '';
+            final String titre = histoire['titre'] ?? 'Titre non disponible';
+
+            return _buildSingleHistoireCard(imageUrl, titre);
+          },
+          options: CarouselOptions(
+            height: 180, // Hauteur du carousel
+            enlargeCenterPage: true, // Met en valeur la carte centrale
+            autoPlay: true, // Lecture automatique
+            autoPlayInterval: const Duration(seconds: 3), // Intervalle de lecture automatique
+            autoPlayAnimationDuration: const Duration(milliseconds: 800), // Durée de l'animation
+            aspectRatio: 16/9, // Ratio d'aspect
+            viewportFraction: 0.8, // Proportion d'affichage
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSingleHistoireCard(String imageUrl, String titre) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.5),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
+        image: DecorationImage(
+          image: NetworkImage(imageUrl),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                  ),
+                ),
+              ),
+            ),
+            Center(
+              child: Text(
+                titre,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
