@@ -18,6 +18,7 @@ class _UtilisateurState extends State<Utilisateur> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController(); // Contrôleur pour le mot de passe
   final TextEditingController _phoneController = TextEditingController();
+  List<Map<String, dynamic>> _users = [];
   String _role = 'Membre'; // Rôle par défaut
   String _filterRole = 'Tous'; // Pour filtrer par rôle
   bool _isLoading = false;
@@ -108,16 +109,28 @@ class _UtilisateurState extends State<Utilisateur> {
     }
   }
 
-  // Fonction pour supprimer un utilisateur et toutes ses données
-  Future<void> _deleteUser(String userId, String email) async {
+  // Fonction pour supprimer un utilisateur de Firestore, Firebase Auth et les histoires associées
+  Future<void> _deleteUser(String userId, String email, String password) async {
     try {
-      // Supprime le document utilisateur depuis Firestore
+      await _deleteUserStories(userId);
       await FirebaseFirestore.instance.collection('users').doc(userId).delete();
-      print('Utilisateur supprimé : $email');
+      print('Utilisateur supprimé de Firestore : $email');
+      await _deleteUserAuth(email, password);
+      print('Utilisateur supprimé de Firebase Auth : $email');
+
+      // Supprimer l'utilisateur de la liste locale et rafraîchir
+      setState(() {
+        _users.removeWhere((user) => user['id'] == userId);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Utilisateur supprimé avec succès')),
+      );
     } catch (e) {
       print("Erreur lors de la suppression de l'utilisateur : $e");
     }
   }
+
 
 
   // Fonction pour supprimer les histoires de l'utilisateur
@@ -157,8 +170,7 @@ class _UtilisateurState extends State<Utilisateur> {
     }
   }
 
-// Popup de confirmation de suppression
-  void _showDeleteConfirmation(String? userId, String? role, String? email) {
+  void _showDeleteConfirmation(String? userId, String? role, String? email, String password) {
     if (userId == null || role == null || email == null) {
       print("Erreur : un des champs est null (id, role, email)");
       return;
@@ -182,19 +194,18 @@ class _UtilisateurState extends State<Utilisateur> {
                 backgroundColor: Colors.white,
               ),
               onPressed: () {
-                Navigator.pop(context); // Ferme le popup de confirmation
+                Navigator.pop(context);
 
                 if (role == 'Admin') {
                   _showAdminDeleteConfirmation(userId, email);
                 } else {
-                  _deleteUser(userId, email).then((_) {
+                  _deleteUser(userId, email, password).then((_) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Utilisateur supprimé avec succès')),
                     );
 
-                    // Recharger automatiquement la page
                     setState(() {
-                      // Recharge des données ou rafraîchissement de l’interface
+                      // Actualise l'interface utilisateur
                     });
                   });
                 }
@@ -251,7 +262,8 @@ class _UtilisateurState extends State<Utilisateur> {
                   onPressed: _confirmResponsibility
                       ? () {
                     Navigator.pop(context);
-                    _deleteUser(userId, email).then((_) {
+                    _deleteUser(userId, email, _passwordController.text).then((_) {
+
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Admin supprimé avec succès')),
                       );
@@ -572,7 +584,8 @@ class _UtilisateurState extends State<Utilisateur> {
                                   final email = user['email'];
 
                                   // Appelle la fonction de popup de confirmation de suppression
-                                  _showDeleteConfirmation(userId, role, email);
+                                  _showDeleteConfirmation(userId, role, email, _passwordController.text);
+
                                 },
                               ),
 
