@@ -320,85 +320,92 @@ class _HistoireState extends State<Histoire> {
                         },
                       ),
                       const SizedBox(height: 15),
-                      Center(
-                        child: Column(
-                          children: [
-                            GestureDetector(
-                              onTap: _pickFiles, // Utiliser la fonction de sélection de fichiers existante
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: const Color(0xFF914b14)),
-                                  color: Colors.white,
-                                ),
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.photo_library, // Icône de la galerie
-                                      color: Color(0xFF914b14),
-                                    ),
-                                    SizedBox(width: 10),
-                                    Text(
-                                      'Sélectionner des ressources', // Texte à côté de l'icône
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF914b14),
-                                      ),
-                                    ),
-                                  ],
+                Center(
+                  child: Column(
+                    children: [
+                      GestureDetector(
+                        onTap: _pickFiles, // Utiliser la fonction de sélection de fichiers existante
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFF914b14)),
+                            color: Colors.white,
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.photo_library, // Icône de la galerie
+                                color: Color(0xFF914b14),
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                'Sélectionner des ressources', // Texte à côté de l'icône
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF914b14),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 20),
-                            // Afficher les fichiers sélectionnés (sous forme de vignettes ou de texte)
-                            _selectedFiles.isNotEmpty
-                                ? Column(
-                              children: _selectedFiles.map((file) {
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 5.0),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF0E1D1),
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(color: const Color(0xFF914b14)),
-                                    ),
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          file.path.split('/').last, // Nom du fichier
-                                          style: const TextStyle(
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(
-                                            Icons.delete,
-                                            color: Colors.red,
-                                          ),
-                                          onPressed: () {
-                                            setState(() {
-                                              _selectedFiles.remove(file); // Retirer le fichier de la liste
-                                            });
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            )
-                                : Container(), // Ne rien afficher si aucun fichier sélectionné
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-
                       const SizedBox(height: 20),
+
+                      // Afficher les fichiers sélectionnés (sous forme de vignettes ou de texte)
+                      _selectedFiles.isNotEmpty
+                          ? Column(
+                        children: _selectedFiles.map((file) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 5.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF0E1D1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFF914b14)),
+                              ),
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
+                                children: [
+                                  // Ajout d'un défilement horizontal pour le nom de fichier
+                                  Expanded(
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: Text(
+                                        file.path.split('/').last, // Nom du fichier
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        overflow: TextOverflow.visible,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _selectedFiles.remove(file); // Retirer le fichier de la liste
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      )
+                          : Container(), // Ne rien afficher si aucun fichier sélectionné
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
                       Center(
                         child: ElevatedButton(
                           onPressed: _addStory,
